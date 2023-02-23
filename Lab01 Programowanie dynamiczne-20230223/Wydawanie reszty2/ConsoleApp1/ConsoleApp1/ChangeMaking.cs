@@ -26,8 +26,83 @@ namespace ASD
         /// </remarks>
         public int? NoLimitsDynamic(int amount, int[] coins, out int[] change)
         {
-            change = null;  // zmienić
-            return -1;      // zmienić
+            int[,] my_dynamic_list = new int[amount+1, coins.Length]; // Zerowy wiersz mnie nie interesuje
+            int[] my_count = new int[amount+1];
+
+            int i;
+            int j;
+            // Wypelnijmy -1 jako wiersze nieprzetworzone
+            for (i = 0; i <= amount; i++)
+            {
+                my_count[i] = -1;
+            }
+            
+            // Wypelnijmy tymi, ktore wiemy, ze sa najlepsze. Mozemy uzyc jednej monety
+            for (j = 0; j < coins.Length; j++)
+            {
+                if (coins[j] > amount) // Moze moneta jest wieksza niz reszta do wydania
+                {
+                    continue;
+                }
+                my_dynamic_list[coins[j], j] = 1; // Posoztale sa 0 by default
+                my_count[coins[j]] = 1; // 1 moneta wystarczy
+            }
+
+            bool wypelniony_wiersz = false;
+            int best_moneta;
+            int best_count;
+            for (i = 1; i <= amount; i++)
+            {
+                if (my_count[i] != -1)
+                {
+                    continue; // Juz ten wiersz jest przetworzony
+                }
+
+                best_moneta = -1;
+                best_count = int.MaxValue;
+                for (j = 0; j < coins.Length; j++)
+                {
+                    if (i - coins[j] < 0)
+                    {
+                        continue; // ta moneta jest nieuzywalna
+                    }
+                    if (my_count[i - coins[j]] == -2)
+                    {
+                        continue; // nie da sie ulozyc i - coins[j]
+                    }
+                    
+                    // Teraz i > i - coins[j] > 0
+                    if (my_count[i - coins[j]] < best_count)
+                    {
+                        best_count = my_count[i - coins[j]];
+                        best_moneta = j;
+                    }
+                }
+
+                if (best_moneta == -1)
+                {
+                    my_count[i] = -2;
+                }
+                else
+                {
+                    // Znalazlem rozwiazanie dla i. Zapiszmy je
+                    my_count[i] = my_count[i - coins[best_moneta]] + 1;
+                    for (int jj = 0; jj < coins.Length; jj++)
+                    { // Przepisz wiersz
+                        my_dynamic_list[i, jj] = my_dynamic_list[i - coins[best_moneta], jj];
+                    }
+                    // Dopisz jedna monete
+                    my_dynamic_list[i, best_moneta] += 1;
+                }
+            }
+
+            change = new int[coins.Length];
+            for (j = 0; j < coins.Length; j++)
+            {
+                change[j] = my_dynamic_list[amount, j];
+            }
+            //change = null;  // zmienić
+            return my_count[amount];      // zmienić
         }
 
         /// <summary>
