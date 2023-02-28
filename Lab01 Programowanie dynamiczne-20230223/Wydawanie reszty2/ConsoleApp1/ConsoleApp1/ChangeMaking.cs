@@ -125,9 +125,21 @@ namespace ASD
         /// Dodatkowa uzyta pamięć powinna (musi) być proporcjonalna do wartości iloczynu amount*(liczba rodzajów monet)
         /// ( czyli rzędu o(amount*(liczba rodzajów monet)) )
         /// </remarks>
+        public static void CopyFormNewToOld(int[,] oldMatrix, out int[,] newMatrix)
+        {
+            newMatrix = new int[oldMatrix.GetLength(0),oldMatrix.GetLength(1)];
+            for (int i = 0; i < oldMatrix.GetLength(0); i++)
+            {
+                for (int j = 0; j < oldMatrix.GetLength(1); j++)
+                {
+                    newMatrix[i, j] = oldMatrix[i, j];
+                }
+            }
+        }
+        
         public int? Dynamic(int amount, int[] coins, int[] limits, out int[] change)
         {
-            int[,] myDynamicChange = new int[amount+1, coins.Length];
+            int[,] myDynamicChangeOld, myDynamicChange = new int[amount+1, coins.Length];
             int[,] myDynamicCount = new int[amount+1, coins.Length];
             
             // Zerowy wiersz ma same zera
@@ -145,8 +157,8 @@ namespace ASD
             //for (i = coins[0]; i <= amount && i <= limits[0]; i += coins[0])
             for (i = 0; i <= amount; i += 1)
             {
-                // Mamy tylko jedna monete
-                if (i > limits[0] * coins[0] || (i % coins[0]) != 0 || i / coins[0] > limits[0])
+                // Mamy tylko jeden rodzaj monety
+                if (i > limits[0] * coins[0] || (i % coins[0]) != 0)
                 {
                     myDynamicCount[i, 0] = -2; // Nie da sie
                     continue;
@@ -155,72 +167,60 @@ namespace ASD
                 myDynamicChange[i, 0] = myDynamicCount[i,0];
             }
 
+            CopyFormNewToOld(myDynamicChange, out myDynamicChangeOld);
+            
             // Mamy wypelnione dla uzywania dokladnie jednej monety
             for (newCoinId = 1; newCoinId < coins.Length; newCoinId++)
             {
                 // Zalozmy, ze mamy do dyspozycji monety o indeksach od 0 do maxMonetId
                 // i mamy dobrze policzone dla dyspozycji monet o indeksach od 0 do maxMonetId - 1
+                // i tamto jest zapisane poprawnie w obu macierzach myDynamicCount oraz myDynamicChangeOld
                 for (i = 1; i <= amount; i++)
                 {
                     // Max ponizej jest tylko po to, zeby nie probowal odczywac pomieci do ktorej nie ma dostepu
                     // Jesli max jest osiagany w 0, to i tak nie przejdzie
-                    bool amountSmallerThanNewCoin = i - coins[newCoinId] < 0;
-                    bool impossibleToMakeOneLessNewCoin = myDynamicCount[Math.Max(0, i - coins[newCoinId]), newCoinId] == -2;
-                    bool alreadyUsedAllNewCoins = myDynamicChange[Math.Max(0, i - coins[newCoinId]), newCoinId] == limits[newCoinId];
-                    if (i == 80 && newCoinId == 2 && amount == 123 && limits[4] == 3 && limits[5] == limits[6] && limits[6] == 0)
+
+                    int bestNewCoinFullAmount = int.MaxValue;
+                    int bestNewCoinAmount = -1;
+                    int newCoinAmount = 0;
+                    int valueWithoutNewCoin = i - coins[newCoinId] * newCoinAmount;
+                    while (valueWithoutNewCoin >= 0 && newCoinAmount <= limits[newCoinId])
                     {
-                        ;
+                        bool daSieZTylomaNowymiMonetami = myDynamicCount[valueWithoutNewCoin, newCoinId - 1] != -2;
+                        bool jestLepiejZTylomaNowymiMonetami =
+                            myDynamicCount[valueWithoutNewCoin, newCoinId - 1] + newCoinAmount < bestNewCoinFullAmount;
+                        if (daSieZTylomaNowymiMonetami && jestLepiejZTylomaNowymiMonetami)
+                        {
+                            bestNewCoinFullAmount = myDynamicCount[valueWithoutNewCoin, newCoinId - 1] + newCoinAmount;
+                            bestNewCoinAmount = newCoinAmount;
+                        }
+                        newCoinAmount++;
+                        valueWithoutNewCoin = i - coins[newCoinId] * newCoinAmount;
                     }
-                    if (amountSmallerThanNewCoin || impossibleToMakeOneLessNewCoin || alreadyUsedAllNewCoins)
+
+                    if (bestNewCoinAmount == -1)
                     {
-                        // Moneta newCoinId nam nie pomoze
-                        // Wystarczy tyle monet, co bez niej, myDynamicChange juz jest ok
-                        myDynamicCount[i, newCoinId] = myDynamicCount[i, newCoinId - 1];
+                        // Nie da sie tylu monet wydac
+                        myDynamicCount[i, newCoinId] = -2;
                         continue;
                     }
+                    valueWithoutNewCoin = i - coins[newCoinId] * bestNewCoinAmount;
+                    // Najlepiej uzyc bestNewCoinAmount nowych monet
+
+                    myDynamicCount[i, newCoinId] =
+                        myDynamicCount[valueWithoutNewCoin, newCoinId - 1] + bestNewCoinAmount;
                     
-                    // Mamy 2 opcje:
-                    // Albo przepisujemy rozwiazanie bez monety newCoinId
-                    // Albo do rozwiazania dla i - coins[newCoinId] dodajemy jenda monete
-
-                    int wouldUseThatManyCoins = myDynamicCount[i - coins[newCoinId], newCoinId] + 1;
-                    int usedThatManyCoins = myDynamicCount[i, newCoinId - 1];
-                    bool nowICanButUsedToCannot = (wouldUseThatManyCoins != -2 && usedThatManyCoins == -2);
-                    if (wouldUseThatManyCoins < usedThatManyCoins || nowICanButUsedToCannot)
+                    for (int k = 0; k < newCoinId; k++)
                     {
-                        // Skoro mozemy uzyc mniej, to to zrobmy; Przepiszmy stare wartosci
-                        for (j = 0; j <= newCoinId; j++)
-                        {
-                            myDynamicChange[i, j] = myDynamicChange[i - coins[newCoinId], j];
-                        }
-                        // Dodajmy nowa monete
-                        myDynamicChange[i, newCoinId]++;
-                        myDynamicCount[i, newCoinId] = wouldUseThatManyCoins;
+                        myDynamicChange[i, k] = myDynamicChangeOld[valueWithoutNewCoin, k];
                     }
-                    else
-                    {
-                        myDynamicCount[i, newCoinId] = usedThatManyCoins;
-                    }
-
-                    if (i == 80 && amount == 123 && limits[4] == 3 && limits[5] == limits[6] && limits[6] == 0)
-                    {
-                        ;
-                    }
+                    myDynamicChange[i, newCoinId] = bestNewCoinAmount;
                 }
-            }
-            
-            if (amount == 123 && limits[4] == 3 && limits[5] == limits[6] && limits[6] == 0)
-            {
-                var myList = Array.Empty<int>();
-                for (int k = 0; k < 124; k++)
-                {
-                    if (myDynamicChange[k, 6] == 1)
-                    {
-                        Console.WriteLine(k);
-                        myList.Append(k);
-                    }
-                }
-                ;
+                
+                // Udalo sie policzyc dla tych monet
+                // Teraz bedziemy liczyc dla kolejnych
+                // wiec nowopowstala tablica jest juz stara
+                CopyFormNewToOld(myDynamicChange, out myDynamicChangeOld);
             }
             
             change = new int[coins.Length];
