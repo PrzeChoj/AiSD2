@@ -17,6 +17,8 @@ namespace Lab02
         {
             bool[,] dynamicPossible = new bool[n, m];
             string[,] dynamicPath  = new string[n, m];
+
+            dynamicPath[0, 0] = "";
             
             /// Na poczatek wpisze w dynamicPossible False jesli jest przeszkoda i False jesli nie ma
             for (int i = 0; i < n; i++)
@@ -31,19 +33,71 @@ namespace Lab02
                 dynamicPossible[obstacles[k].Item1, obstacles[k].Item2] = false;
             }
 
-            /// Teraz zaczne dynamicznie kolumnowo wypelniac obie macierze
-            for (int i = 0; i < n; i++)
+            /// Teraz zaczne dynamicznie wypelniac obie macierze
+            /// Na poczatek pierwszy wiersz oddzielnie
+            for (int j = 1; j < m; j++)
             {
-                for (int j = 0; j < m; j++)
+                if (!dynamicPossible[0, j])
                 {
-                    if (dynamicPossible[i, j])
+                    // dynamicPossible[0, j] juz ma false
+                    dynamicPath[0, j] = "";
+                    continue;
+                }
+
+                dynamicPossible[0, j] = dynamicPossible[0, j - 1];
+                dynamicPath[0, j] = dynamicPath[0, j - 1] + "R";
+            }
+            
+            /// Pierwszy wiersz jest ok
+            /// Teraz pierwsza kolumna
+            for (int i = 1; i < n; i++)
+            {
+                if (!dynamicPossible[i, 0])
+                {
+                    // dynamicPossible[i, 0] juz ma false
+                    dynamicPath[i, 0] = "";
+                    continue;
+                }
+
+                dynamicPossible[i, 0] = dynamicPossible[i - 1, 0];
+                dynamicPath[i, 0] = dynamicPath[i - 1, 0] + "D";
+            }
+            
+            /// Pierwszy wiersz i pierwsza kolumna juz sa ok
+            /// Teraz dynamicznie reszte macierzy
+            /// WIERSZOWO
+            for (int i = 1; i < n; i++)
+            {
+                for (int j = 1; j < m; j++)
+                {
+                    if (!dynamicPossible[i, j])
                     {
-                        //TODO
+                        // dynamicPossible[i, j] juz ma false
+                        dynamicPath[i, j] = "";
+                        continue;
                     }
+
+                    if (dynamicPossible[i - 1, j])
+                    {
+                        // dynamicPossible[i, j] juz ma true
+                        dynamicPath[i, j] = dynamicPath[i - 1, j] + "D";
+                        continue;
+                    }
+                    
+                    if (dynamicPossible[i, j - 1])
+                    {
+                        // dynamicPossible[i, j] juz ma true
+                        dynamicPath[i, j] = dynamicPath[i, j - 1] + "R";
+                        continue;
+                    }
+                    
+                    // nie da sie dojsc
+                    dynamicPossible[i, j] = false;
+                    dynamicPath[i, j] = "";
                 }
             }
             
-            return (false, "");
+            return (dynamicPossible[n-1, m-1], dynamicPath[n-1, m-1]);
         }
 
         /// <summary>
