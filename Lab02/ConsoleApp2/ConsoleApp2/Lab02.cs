@@ -172,7 +172,7 @@ namespace Lab02
             {
                 for (int j = 0; j < m; j++)
                 {
-                    dynamicPossible[0, i, j] = false; // Prawdopodobnie byl juz na poczatku, ale napisze, ze tak chce
+                    dynamicPossible[0, i, j] = false; // Byl tak zainicjowany juz na poczatku, ale napisze explicite, ze tak chce
                 }
             }
             dynamicPossible[0, 0, 0] = true;
@@ -187,7 +187,156 @@ namespace Lab02
                 /// 2. R
                 /// 3. *
                 /// 4. ?
-                
+
+                switch (pattern[k - 1]) /// Pattern dlugosci k konczy sie ta litera
+                {
+                    case 'D':
+                        /// Najpierw pierwszy wiersz bedzie false
+                        for (int j = 0; j < m; j++)
+                        {
+                            dynamicPossible[k, 0, j] = false;
+                        }
+                        /// Pozostale wiersze
+                        for (int i = 1; i < n; i++)
+                        {
+                            for (int j = 0; j < m; j++)
+                            {
+                                if (!dynamicPossible[k, i, j])
+                                {
+                                    /// Tu jest przeszkoda
+                                    continue;
+                                }
+
+                                /// Da sie dostac na [k-1, i-1, j] iff da sie na [k, i, j]
+                                dynamicPossible[k, i, j] = dynamicPossible[k - 1, i - 1, j];
+                            }
+                        }
+                        break;
+                    case 'R':
+                        /// Najpierw pierwsza kolumna bedzie false
+                        for (int i = 0; i < n; i++)
+                        {
+                            dynamicPossible[k, i, 0] = false;
+                        }
+                        /// Pozostale kolumny
+                        for (int i = 0; i < n; i++)
+                        {
+                            for (int j = 1; j < m; j++)
+                            {
+                                if (!dynamicPossible[k, i, j])
+                                {
+                                    /// Tu jest przeszkoda
+                                    continue;
+                                }
+
+                                /// Da sie dostac na [k-1, i, j-1] iff da sie na [k, i, j]
+                                dynamicPossible[k, i, j] = dynamicPossible[k - 1, i, j - 1];
+                            }
+                        }
+                        break;
+                    case '?':
+                        /// Nie da sie dostac na [0, 0]
+                        dynamicPossible[k, 0, 0] = false;
+                        
+                        /// Pierwszy wiersz tylko z lewej moze
+                        for (int j = 1; j < m; j++)
+                        {
+                            if (!dynamicPossible[k, 0, j])
+                            {
+                                /// Tu jest przeszkoda
+                                continue;
+                            }
+                            
+                            /// Da sie dostac na [k-1, 0, j-1] iff da sie na [k, 0, j]
+                            dynamicPossible[k, 0, j] = dynamicPossible[k - 1, 0, j - 1];
+                        }
+                        
+                        /// Pierwsza kolumna tylko z gory moze
+                        for (int i = 1; i < n; i++)
+                        {
+                            if (!dynamicPossible[k, i, 0])
+                            {
+                                /// Tu jest przeszkoda
+                                continue;
+                            }
+                            
+                            /// Da sie dostac na [k-1, i-1, 0] iff da sie na [k, i, 0]
+                            dynamicPossible[k, i, 0] = dynamicPossible[k - 1, i - 1, 0];
+                        }
+                        
+                        /// Pozostale wiersze i kolumny
+                        for (int i = 1; i < n; i++)
+                        {
+                            for (int j = 1; j < m; j++)
+                            {
+                                if (!dynamicPossible[k, i, j])
+                                {
+                                    /// Tu jest przeszkoda
+                                    continue;
+                                }
+
+                                /// Da sie dostac na [k, i, j] iff da sie na
+                                ///     [k-1, i, j-1] albo [k-1, i-1, j]:
+                                dynamicPossible[k, i, j] =
+                                    (dynamicPossible[k - 1, i, j - 1] || dynamicPossible[k - 1, i - 1, j]);
+                            }
+                        }
+                        break;
+                    case '*':
+                        /// Pierwszy element
+                        dynamicPossible[k, 0, 0] = dynamicPossible[k - 1, 0, 0];
+                        
+                        /// Pierwszy wiersz tylko z lewej moze
+                        for (int j = 1; j < m; j++)
+                        {
+                            if (!dynamicPossible[k, 0, j])
+                            {
+                                /// Tu jest przeszkoda
+                                continue;
+                            }
+                            
+                            /// Da sie dostac na [k, 0, j] iff da sie na
+                            ///     [k, 0, j-1] albo [k-1, 0, j]
+                            dynamicPossible[k, 0, j] = 
+                                (dynamicPossible[k, 0, j - 1] || dynamicPossible[k - 1, 0, j]);
+                        }
+                        
+                        /// Pierwsza kolumna tylko z gory moze
+                        for (int i = 1; i < n; i++)
+                        {
+                            if (!dynamicPossible[k, i, 0])
+                            {
+                                /// Tu jest przeszkoda
+                                continue;
+                            }
+                            
+                            /// Da sie dostac na [k, i, 0] iff da sie na
+                            ///     [k-1, i, 0] albo [k, i-1, 0]
+                            dynamicPossible[k, i, 0] = 
+                                (dynamicPossible[k - 1, i, 0] || dynamicPossible[k, i - 1, 0]);
+                        }
+                        
+                        /// Pozostale wiersze i kolumny
+                        for (int i = 1; i < n; i++)
+                        {
+                            for (int j = 1; j < m; j++)
+                            {
+                                if (!dynamicPossible[k, i, j])
+                                {
+                                    /// Tu jest przeszkoda
+                                    continue;
+                                }
+
+                                /// Da sie dostac na [k, i, j] iff da sie na
+                                ///     [k-1, i, j] albo [k, i-1, j] albo [k, i, j-1]
+                                dynamicPossible[k, i, j] =
+                                    (dynamicPossible[k - 1, i, j] || dynamicPossible[k, i - 1, j] || dynamicPossible[k, i, j - 1]);
+                            }
+                        }
+                        break;
+                    default:
+                        throw new Exception("Impropper pattern");
+                }
             }
 
             return (dynamicPossible[pattern.Length, n - 1, m - 1], ""); /// TODO(Zapisac droge)
