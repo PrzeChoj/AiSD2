@@ -18,7 +18,7 @@ namespace Lab02
             bool[,] dynamicPossible = new bool[n, m];
             char[,] dynamicPath  = new char[n, m];
             
-            /// Trasa zapisywana jako liczba int.
+            /// Trasa zapisywana jako znak char.
             /// Jesli w dol,    to 'D'
             /// Jesli w prawo,  to 'R'
             /// Jak sie nie da, to 'N'
@@ -146,7 +146,18 @@ namespace Lab02
             /// W tej tablicy na (k, i, j) bedzie informacja, czy da sie
             /// na patternie do k dojsc do miejsca (i, j)
             bool[,,] dynamicPossible = new bool[pattern.Length + 1, n, m];
+            char[,,] dynamicPath  = new char[pattern.Length + 1, n, m];
             
+            /// Trasa zapisywana jako znak char.
+            /// Jesli w dol,                   to 'D'
+            /// Jesli w dol z gwiazki,         to 'd'
+            /// Jesli w prawo,                 to 'R'
+            /// Jesli w prawo z gwiazki,       to 'r'
+            /// Jesli z przeszlosci z gwiazki, to 'p'
+            /// Jak sie nie da,                to 'N'
+            ///
+            /// dynamicPath[0, *, *] nic nie oznacza i jest zainicjowana dla wygody
+
             /// Przepiszmy zakazane miejsca do dynamicPossible
             for (int k = 1; k < pattern.Length + 1; k++)
             {
@@ -195,6 +206,7 @@ namespace Lab02
                         for (int j = 0; j < m; j++)
                         {
                             dynamicPossible[k, 0, j] = false;
+                            dynamicPath[k, 0, j] = 'N';
                         }
                         /// Pozostale wiersze
                         for (int i = 1; i < n; i++)
@@ -204,11 +216,13 @@ namespace Lab02
                                 if (!dynamicPossible[k, i, j])
                                 {
                                     /// Tu jest przeszkoda
+                                    dynamicPath[k, i, j] = 'N';
                                     continue;
                                 }
 
                                 /// Da sie dostac na [k-1, i-1, j] iff da sie na [k, i, j]
                                 dynamicPossible[k, i, j] = dynamicPossible[k - 1, i - 1, j];
+                                dynamicPath[k, i, j] = 'D';
                             }
                         }
                         break;
@@ -217,6 +231,7 @@ namespace Lab02
                         for (int i = 0; i < n; i++)
                         {
                             dynamicPossible[k, i, 0] = false;
+                            dynamicPath[k, i, 0] = 'N';
                         }
                         /// Pozostale kolumny
                         for (int i = 0; i < n; i++)
@@ -226,17 +241,20 @@ namespace Lab02
                                 if (!dynamicPossible[k, i, j])
                                 {
                                     /// Tu jest przeszkoda
+                                    dynamicPath[k, i, j] = 'N';
                                     continue;
                                 }
 
                                 /// Da sie dostac na [k-1, i, j-1] iff da sie na [k, i, j]
                                 dynamicPossible[k, i, j] = dynamicPossible[k - 1, i, j - 1];
+                                dynamicPath[k, i, j] = 'R';
                             }
                         }
                         break;
                     case '?':
                         /// Nie da sie dostac na [0, 0]
                         dynamicPossible[k, 0, 0] = false;
+                        dynamicPath[k, 0, 0] = 'N';
                         
                         /// Pierwszy wiersz tylko z lewej moze
                         for (int j = 1; j < m; j++)
@@ -244,11 +262,13 @@ namespace Lab02
                             if (!dynamicPossible[k, 0, j])
                             {
                                 /// Tu jest przeszkoda
+                                dynamicPath[k, 0, j] = 'N';
                                 continue;
                             }
                             
                             /// Da sie dostac na [k-1, 0, j-1] iff da sie na [k, 0, j]
                             dynamicPossible[k, 0, j] = dynamicPossible[k - 1, 0, j - 1];
+                            dynamicPath[k, 0, j] = 'R';
                         }
                         
                         /// Pierwsza kolumna tylko z gory moze
@@ -257,11 +277,13 @@ namespace Lab02
                             if (!dynamicPossible[k, i, 0])
                             {
                                 /// Tu jest przeszkoda
+                                dynamicPath[k, i, 0] = 'N';
                                 continue;
                             }
                             
                             /// Da sie dostac na [k-1, i-1, 0] iff da sie na [k, i, 0]
                             dynamicPossible[k, i, 0] = dynamicPossible[k - 1, i - 1, 0];
+                            dynamicPath[k, i, 0] = 'D';
                         }
                         
                         /// Pozostale wiersze i kolumny
@@ -272,19 +294,41 @@ namespace Lab02
                                 if (!dynamicPossible[k, i, j])
                                 {
                                     /// Tu jest przeszkoda
+                                    dynamicPath[k, i, j] = 'N';
                                     continue;
                                 }
 
                                 /// Da sie dostac na [k, i, j] iff da sie na
                                 ///     [k-1, i, j-1] albo [k-1, i-1, j]:
-                                dynamicPossible[k, i, j] =
-                                    (dynamicPossible[k - 1, i, j - 1] || dynamicPossible[k - 1, i - 1, j]);
+                                if (dynamicPossible[k - 1, i, j - 1])
+                                {
+                                    dynamicPossible[k, i, j] = true;
+                                    dynamicPath[k, i, j] = 'R';
+                                }
+                                else if (dynamicPossible[k - 1, i - 1, j])
+                                {
+                                    dynamicPossible[k, i, j] = true;
+                                    dynamicPath[k, i, j] = 'D';
+                                }
+                                else
+                                {
+                                    dynamicPossible[k, i, j] = false;
+                                    dynamicPath[k, i, j] = 'N';
+                                }
                             }
                         }
                         break;
                     case '*':
                         /// Pierwszy element
                         dynamicPossible[k, 0, 0] = dynamicPossible[k - 1, 0, 0];
+                        if (dynamicPossible[k, 0, 0])
+                        {
+                            dynamicPath[k, 0, 0] = 'p';
+                        }
+                        else
+                        {
+                            dynamicPath[k, 0, 0] = 'N';
+                        }
                         
                         /// Pierwszy wiersz tylko z lewej moze
                         for (int j = 1; j < m; j++)
@@ -292,13 +336,27 @@ namespace Lab02
                             if (!dynamicPossible[k, 0, j])
                             {
                                 /// Tu jest przeszkoda
+                                dynamicPath[k, 0, j] = 'N';
                                 continue;
                             }
                             
                             /// Da sie dostac na [k, 0, j] iff da sie na
                             ///     [k, 0, j-1] albo [k-1, 0, j]
-                            dynamicPossible[k, 0, j] = 
-                                (dynamicPossible[k, 0, j - 1] || dynamicPossible[k - 1, 0, j]);
+                            if (dynamicPossible[k, 0, j - 1])
+                            {
+                                dynamicPossible[k, 0, j] = true;
+                                dynamicPath[k, 0, j] = 'r';
+                            }
+                            else if (dynamicPossible[k - 1, 0, j])
+                            {
+                                dynamicPossible[k, 0, j] = true;
+                                dynamicPath[k, 0, j] = 'p';
+                            }
+                            else
+                            {
+                                dynamicPossible[k, 0, j] = false;
+                                dynamicPath[k, 0, j] = 'N';
+                            }
                         }
                         
                         /// Pierwsza kolumna tylko z gory moze
@@ -307,13 +365,27 @@ namespace Lab02
                             if (!dynamicPossible[k, i, 0])
                             {
                                 /// Tu jest przeszkoda
+                                dynamicPath[k, i, 0] = 'N';
                                 continue;
                             }
                             
                             /// Da sie dostac na [k, i, 0] iff da sie na
                             ///     [k-1, i, 0] albo [k, i-1, 0]
-                            dynamicPossible[k, i, 0] = 
-                                (dynamicPossible[k - 1, i, 0] || dynamicPossible[k, i - 1, 0]);
+                            if (dynamicPossible[k - 1, i, 0])
+                            {
+                                dynamicPossible[k, i, 0] = true;
+                                dynamicPath[k, i, 0] = 'p';
+                            }
+                            else if (dynamicPossible[k, i - 1, 0])
+                            {
+                                dynamicPossible[k, i, 0] = true;
+                                dynamicPath[k, i, 0] = 'd';
+                            }
+                            else
+                            {
+                                dynamicPossible[k, i, 0] = false;
+                                dynamicPath[k, i, 0] = 'N';
+                            }
                         }
                         
                         /// Pozostale wiersze i kolumny
@@ -324,13 +396,32 @@ namespace Lab02
                                 if (!dynamicPossible[k, i, j])
                                 {
                                     /// Tu jest przeszkoda
+                                    dynamicPath[k, i, j] = 'N';
                                     continue;
                                 }
 
                                 /// Da sie dostac na [k, i, j] iff da sie na
                                 ///     [k-1, i, j] albo [k, i-1, j] albo [k, i, j-1]
-                                dynamicPossible[k, i, j] =
-                                    (dynamicPossible[k - 1, i, j] || dynamicPossible[k, i - 1, j] || dynamicPossible[k, i, j - 1]);
+                                if (dynamicPossible[k - 1, i, j])
+                                {
+                                    dynamicPossible[k, i, j] = true;
+                                    dynamicPath[k, i, j] = 'p';
+                                }
+                                else if (dynamicPossible[k, i - 1, j])
+                                {
+                                    dynamicPossible[k, i, j] = true;
+                                    dynamicPath[k, i, j] = 'd';
+                                }
+                                else if(dynamicPossible[k, i, j - 1])
+                                {
+                                    dynamicPossible[k, i, j] = true;
+                                    dynamicPath[k, i, j] = 'r';
+                                }
+                                else
+                                {
+                                    dynamicPossible[k, i, j] = false;
+                                    dynamicPath[k, i, j] = 'N';
+                                }
                             }
                         }
                         break;
@@ -339,7 +430,61 @@ namespace Lab02
                 }
             }
 
-            return (dynamicPossible[pattern.Length, n - 1, m - 1], ""); /// TODO(Zapisac droge)
+            /// Pozostalo odczytac trase
+            /// Zapisana ona jest w macierzy dynamicPath
+            /// Zaczniemy od dynamicPath[pattern.Length, n - 1, m - 1]
+            /// Gdy trafimy na odpowiednia litere to odpowiednio sie zachowamy
+            
+            /// dynamicPossible[pattern.Length, n - 1, m - 1] jest false
+            /// iff
+            /// dynamicPath[pattern.Length, n - 1, m - 1] jest 'N'
+            
+            if (!dynamicPossible[pattern.Length, n - 1, m - 1])
+            {
+                return (false, "");
+            }
+            
+            StringBuilder trasaString = new StringBuilder();
+            int kk = pattern.Length;
+            int ii = n - 1;
+            int jj = m - 1;
+            while (ii != 0 || jj != 0)
+            {
+                switch (dynamicPath[kk, ii, jj])
+                {
+                    case 'D':
+                        trasaString.Append("D");
+                        kk--;
+                        ii--;
+                        break;
+                    case 'd':
+                        trasaString.Append("D");
+                        ii--;
+                        break;
+                    case 'R':
+                        trasaString.Append("R");
+                        kk--;
+                        jj--;
+                        break;
+                    case 'r':
+                        trasaString.Append("R");
+                        jj--;
+                        break;
+                    case 'p':
+                        kk--;
+                        break;
+                    case 'N':
+                    default:
+                        throw new Exception("Bug of the algorithm :<");
+                }
+            }
+            
+            /// Odwrocic stringa
+            char[] chars = trasaString.ToString().ToCharArray();
+            Array.Reverse(chars);
+            string reversedString = new string(chars);
+            
+            return (dynamicPossible[pattern.Length, n - 1, m - 1], reversedString);
         }
     }
 }
