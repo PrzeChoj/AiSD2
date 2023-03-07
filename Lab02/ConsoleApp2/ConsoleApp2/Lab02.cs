@@ -124,8 +124,13 @@ namespace Lab02
                     ii--;
                 }
             }
-
-            return (dynamicPossible[n-1, m-1], new string(trasaString.ToString().Reverse().ToArray()));
+            
+            /// Odwrocic stringa
+            char[] chars = trasaString.ToString().ToCharArray();
+            Array.Reverse(chars);
+            string reversedString = new string(chars);
+            
+            return (dynamicPossible[n-1, m-1], reversedString);
         }
 
         /// <summary>
