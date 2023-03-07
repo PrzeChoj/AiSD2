@@ -134,7 +134,7 @@ namespace Lab02
         }
 
         /// <summary>
-        /// Etap 2 - wyznaczenie trasy realizującej zadany wzorzec, zgodnie z którą robot przemieści się z pozycji poczatkowej (0,0) na pozycję docelową (-n-1, m-1)
+        /// Etap 2 - wyznaczenie trasy realizującej zadany wzorzec, zgodnie z którą robot przemieści się z pozycji poczatkowej (0,0) na pozycję docelową (n-1, m-1)
         /// </summary>
         /// <param name="n">wysokość prostokąta</param>
         /// <param name="m">szerokość prostokąta</param>
@@ -143,7 +143,54 @@ namespace Lab02
         /// <returns>krotka (bool result, string path) - result ma wartość true jeżeli trasa istnieje, false wpp., path to wynikowa trasa</returns>
         public (bool result, string path) Lab02Stage2(int n, int m, string pattern, (int, int)[] obstacles)
         {
-            return (false, "");
+            /// W tej tablicy na (k, i, j) bedzie informacja, czy da sie
+            /// na patternie do k dojsc do miejsca (i, j)
+            bool[,,] dynamicPossible = new bool[pattern.Length + 1, n, m];
+            
+            /// Przepiszmy zakazane miejsca do dynamicPossible
+            for (int k = 1; k < pattern.Length + 1; k++)
+            {
+                for (int i = 0; i < n; i++)
+                {
+                    for (int j = 0; j < m; j++)
+                    {
+                        dynamicPossible[k, i, j] = true;
+                    }
+                }
+            }
+            for (int k = 1; k < pattern.Length + 1; k++)
+            {
+                for (int o = 0; o < obstacles.Length; o++)
+                {
+                    dynamicPossible[k, obstacles[o].Item1, obstacles[o].Item2] = false;
+                }
+            }
+            /// Teraz w dynamicPossible na [k, i, j] jest info, czy na [i, j] jest obstacle (poza k == 0)
+            
+            /// Ustawny dla k = 0
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = 0; j < m; j++)
+                {
+                    dynamicPossible[0, i, j] = false; // Prawdopodobnie byl juz na poczatku, ale napisze, ze tak chce
+                }
+            }
+            dynamicPossible[0, 0, 0] = true;
+            
+            for (int k = 1; k < pattern.Length + 1; k++)
+            {
+                /// W dynamicPossible[k - 1, *, *] jest info takie jak trzeba
+                /// TODO(Zrobimy dla dynamicPossible[k, *, *] takie jak trzeba)
+                
+                /// Mamy 4 opcje na nastepny znak
+                /// 1. D
+                /// 2. R
+                /// 3. *
+                /// 4. ?
+                
+            }
+
+            return (dynamicPossible[pattern.Length, n - 1, m - 1], ""); /// TODO(Zapisac droge)
         }
     }
 }
