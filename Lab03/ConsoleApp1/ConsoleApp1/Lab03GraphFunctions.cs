@@ -22,7 +22,14 @@ namespace ASD
         //   2) Graf wynikowy musi być w takiej samej reprezentacji jak wejściowy
         public DiGraph Lab03Reverse(DiGraph g)
         {
-            return null;
+            DiGraph outGraph = new DiGraph(g.VertexCount, g.Representation);
+
+            foreach (Edge e in g.DFS().SearchAll())
+            {
+                outGraph.AddEdge(e.To, e.From); // Reversed order
+            }
+
+            return outGraph;
         }
 
         // Część 2
@@ -44,8 +51,53 @@ namespace ASD
         //   4) Metoda ma mieć taki sam rząd złożoności jak zwykłe przeszukiwanie (za większą będą kary!)
         public bool Lab03IsBipartite(Graph g, out int[] vert)
         {
+            vert = new int[g.VertexCount];
+
+            for (int i = 0; i < g.VertexCount; i++)
+            {
+                vert[i] = 1;
+            }
+            
+            vert[0] = 1;
+            foreach (Edge e in g.DFS().SearchFrom(0))
+            {
+                vert[e.To] = reverseVertex(vert[e.From]);
+            }
+
+            if (IsProperPartition(g, vert))
+            {
+                return true;
+            }
+
             vert = null;
             return false;
+        }
+        
+        private static bool IsProperPartition(Graph g, int[] part)
+        {
+            if (part == null || part.Length != g.VertexCount) return false;
+            for (int v = 0; v < g.VertexCount; ++v)
+                if (part[v] != 1 && part[v] != 2)
+                    return false;
+            for (int v = 0; v < g.VertexCount; ++v)
+                foreach (int u in g.OutNeighbors(v))
+                    if (part[u] == part[v])
+                        return false;
+            return true;
+        }
+
+        private int reverseVertex(int vFrom)
+        {
+            if (vFrom == 1)
+            {
+                return 2;
+            }
+            else if (vFrom == 2)
+            {
+                return 1;
+            }
+
+            throw new Exception("wrong input vFrom");
         }
 
         // Część 3
@@ -68,8 +120,45 @@ namespace ASD
         //   4) Graf wynikowy (drzewo) musi być w takiej samej reprezentacji jak wejściowy
         public Graph<int> Lab03Kruskal(Graph<int> g, out int mstw)
         {
-            mstw = 0;
-            return null;
+            var myPriorityQueue = new PriorityQueue<int, (int, int)>();
+
+            for (int i = 0; i < g.VertexCount; i++)
+            {
+                foreach (var edge in g.OutEdges(i))
+                {
+                    myPriorityQueue.Insert((edge.From, edge.To), g.GetEdgeWeight(edge.From, edge.To));
+                }
+            }
+
+            var myUnionFind = new ASD.UnionFind(g.VertexCount);
+            Graph<int> outG = new Graph<int>(g.VertexCount);
+            int wagaOutG = 0;
+            
+            try
+            {
+                while (true)
+                {
+                    var edge = myPriorityQueue.Extract();
+
+                    if (myUnionFind.Find(edge.Item1) == myUnionFind.Find(edge.Item2))
+                    {
+                        continue; // Po dodaniu edge do outG mialbym cykl
+                    }
+                    
+                    outG.AddEdge(edge.Item1, edge.Item2);
+                    outG.AddEdge(edge.Item2, edge.Item1);
+                    wagaOutG += g.GetEdgeWeight(edge.Item1, edge.Item2);
+                    
+                    myUnionFind.Union(edge.Item1, edge.Item2);
+                }
+            }
+            catch (System.InvalidOperationException e)
+            {
+                // Kolejka jest pusta. Nic nie rob, wszystko jest ok
+            }
+
+            mstw = wagaOutG;
+            return outG;
         }
 
         // Część 4
@@ -86,8 +175,39 @@ namespace ASD
         //      Zadanie jest bardzo łatwe (jeśli wydaje się trudne - poszukać prostszego sposobu, a nie walczyć z trudnym!)
         public bool Lab03IsUndirectedAcyclic(Graph g)
         {
-            return false;
+            // Wystarczy policzyć ile spójnych składowych ma graf
+            int numComponents = CountConnectedComponents(g);
+            
+            return (g.VertexCount - numComponents == g.EdgeCount);
         }
+        
+        public int CountConnectedComponents(Graph g)
+        {
+            HashSet<int> visited = new HashSet<int>();
+            int numComponents = 0;
+            for (int node = 0; node < g.VertexCount; node++)
+            {
+                if (!visited.Contains(node))
+                {
+                    numComponents++;
+                    DFS(node, visited, g);
+                }
+            }
+            return numComponents;
+        }
+
+        private void DFS(int node, HashSet<int> visited, Graph g)
+        {
+            visited.Add(node);
+            foreach (int neighbor in g.OutNeighbors(node))
+            {
+                if (!visited.Contains(neighbor))
+                {
+                    DFS(neighbor, visited, g);
+                }
+            }
+        }
+
 
     }
 

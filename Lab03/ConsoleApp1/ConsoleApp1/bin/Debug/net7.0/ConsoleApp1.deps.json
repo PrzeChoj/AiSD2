@@ -1,0 +1,53 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v7.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v7.0": {
+      "ConsoleApp1/1.0.0": {
+        "dependencies": {
+          "Graphs": "1.0.0.0",
+          "TestSet": "2.3.1.0"
+        },
+        "runtime": {
+          "ConsoleApp1.dll": {}
+        }
+      },
+      "Graphs/1.0.0.0": {
+        "runtime": {
+          "Graphs.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "TestSet/2.3.1.0": {
+        "runtime": {
+          "TestSet.dll": {
+            "assemblyVersion": "2.3.1.0",
+            "fileVersion": "2.3.1.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ConsoleApp1/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Graphs/1.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "TestSet/2.3.1.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
