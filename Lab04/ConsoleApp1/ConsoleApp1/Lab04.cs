@@ -1,7 +1,9 @@
 using System;
+using System.Collections;
 using ASD.Graphs;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace ASD
 {
@@ -77,6 +79,8 @@ namespace ASD
         /// jeżeli possible == false to route ustawiamy na null</returns>
         public (bool possible, int[] route) Lab04Stage2(DiGraph<int> graph, int[] starts, int[] goals)
         {
+            var getHerefrom = new Hashtable();
+            
             var goalsSet = new HashSet<int>(goals);
             var graphNewStart = new DiGraph<int>(graph.VertexCount + 1);
             /// graphNewStart będzie tym samym, co graph z dodatkowym wierzchołkiem startowym
@@ -94,6 +98,7 @@ namespace ASD
             foreach (int start in starts)
             {
                 graphNewStart.AddEdge(graph.VertexCount, start, -1);
+                getHerefrom[start] = graph.VertexCount;
             }
             // graphNewStart jest juz zbudowany poprawnie
 
@@ -101,13 +106,10 @@ namespace ASD
             int START = graph.VertexCount;
             var canGetIntoSet = new HashSet<(int, int)>(); // Mozemy sie dostac do item1 zaczynajac w item2
             var canGetIntoSetOld = new HashSet<(int, int)>(); // W poprzednim kroku
-            var canGetIntoSetOld3 = new HashSet<(int, (int, int))>(); // W poprzednim kroku
             var canGetIntoSetNew = new HashSet<(int, int)>(); // W tym kroku
-            var canGetIntoSetNew3 = new HashSet<(int, (int, int))>(); // W tym kroku
             
             canGetIntoSet.Add((START, -1));
             canGetIntoSetOld.Add((START, -1));
-            canGetIntoSetOld3.Add((START, (-1, -2)));
             
             if (goalsSet.Contains(START))
             {
@@ -133,27 +135,60 @@ namespace ASD
                         bool wasThereAlready = canGetIntoSet.Contains((outNeighbor, canGetIntoSetOldElement.Item1));
                         if (canGoFurther && !wasThereAlready)
                         {
+                            if(!getHerefrom.Contains(outNeighbor))
+                                getHerefrom[outNeighbor] = canGetIntoSetOldElement.Item1; // Tylko pierwsze odwiedziny
+
                             if (goalsSet.Contains(outNeighbor))
                             {
                                 // Znalazlem trase. Ignacy bedzie zadowolony
                                 
-                                return (true, null);
+                                return (true, getPathAlt(graphNewStart, outNeighbor, canGetIntoSetOldElement.Item1));
                             }
                             
                             canGetIntoSetNew.Add((outNeighbor, canGetIntoSetOldElement.Item1));
-                            canGetIntoSetNew3.Add((outNeighbor, (canGetIntoSetOldElement.Item1, canGetIntoSetOldElement.Item2)));
                             canGetIntoSet.Add((outNeighbor, canGetIntoSetOldElement.Item1));
                         }
                     }
                 }
                 
                 canGetIntoSetOld = canGetIntoSetNew;
-                canGetIntoSetOld3 = canGetIntoSetNew3;
                 canGetIntoSetNew = new HashSet<(int, int)>();
-                canGetIntoSetNew3 = new HashSet<(int, (int, int))>();
             }
             
             return (false, null);
+        }
+
+        private int[] getPathAlt(DiGraph<int> graph, int goal, int goalMinus1)
+        {
+            int startVertex = graph.VertexCount - 1;
+            int dlugoscTrasy = 0;
+            int vertexNow = goal;
+            int vertexNowMinus1 = goalMinus1;
+            int tmp;
+            while (vertexNowMinus1 != startVertex)
+            {
+                tmp = vertexNowMinus1;
+                vertexNowMinus1 = graph.GetEdgeWeight(vertexNowMinus1, vertexNow);
+                vertexNow = tmp;
+                dlugoscTrasy++;
+            }
+            dlugoscTrasy++;
+            
+            int[] outPath = new int[dlugoscTrasy];
+
+            dlugoscTrasy = outPath.Length-1;
+            vertexNow = goal;
+            vertexNowMinus1 = goalMinus1;
+            while (dlugoscTrasy != -1)
+            {
+                outPath[dlugoscTrasy] = vertexNow;
+                tmp = vertexNowMinus1;
+                vertexNowMinus1 = graph.GetEdgeWeight(vertexNowMinus1, vertexNow);
+                vertexNow = tmp;
+                dlugoscTrasy--;
+            }
+
+            return outPath;
         }
     }
 }
