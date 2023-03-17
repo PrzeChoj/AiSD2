@@ -80,68 +80,69 @@ namespace ASD
         public (bool possible, int[] route) Lab04Stage2(DiGraph<int> graph, int[] starts, int[] goals)
         {
             var goalsSet = new HashSet<int>(goals);
+            var startsSet = new HashSet<int>(starts);
+            
+            var canGetIntoSet = new HashSet<(int, int)>(); // Mozemy sie dostac do item1 zaczynajac w item2
+            var canGetIntoSetOld = new HashSet<(int, int)>(); // W poprzednim kroku
+            var canGetIntoSetNew = new HashSet<(int, int)>(); // W tym kroku
 
             foreach (int START in starts)
             {
                 if (goals.Contains(START))
                 {
-                    return (true, new []{START});
+                    return (true, new[] { START });
                 }
-                
-                var canGetIntoSet = new HashSet<(int, int)>(); // Mozemy sie dostac do item1 zaczynajac w item2
-                var canGetIntoSetOld = new HashSet<(int, int)>(); // W poprzednim kroku
-                var canGetIntoSetNew = new HashSet<(int, int)>(); // W tym kroku
-                
+
                 canGetIntoSet.Add((START, -1));
                 canGetIntoSetOld.Add((START, -1));
-                
-                while (canGetIntoSetOld.Count != 0)
-                {
-                    // Dodaj znalezione ostatnio do calosci
-                    foreach (var newElemToCanGetIntoSet in canGetIntoSetOld)
-                    {
-                        canGetIntoSet.Add(newElemToCanGetIntoSet);
-                    }
+            }
 
-                    // Dodaj nowe
-                    foreach (var canGetIntoSetOldElement in canGetIntoSetOld)
+            while (canGetIntoSetOld.Count != 0)
+            {
+                // Dodaj znalezione ostatnio do calosci
+                foreach (var newElemToCanGetIntoSet in canGetIntoSetOld)
+                {
+                    canGetIntoSet.Add(newElemToCanGetIntoSet);
+                }
+
+                // Dodaj nowe
+                foreach (var canGetIntoSetOldElement in canGetIntoSetOld)
+                {
+                    foreach (int outNeighbor in graph.OutNeighbors(canGetIntoSetOldElement.Item1))
                     {
-                        foreach (int outNeighbor in graph.OutNeighbors(canGetIntoSetOldElement.Item1))
+                        bool canGoFurther = graph.GetEdgeWeight(canGetIntoSetOldElement.Item1, outNeighbor) ==
+                                            canGetIntoSetOldElement.Item2;
+                        bool wasThereAlready = canGetIntoSet.Contains((outNeighbor, canGetIntoSetOldElement.Item1));
+                        if (canGoFurther && !wasThereAlready)
                         {
-                            bool canGoFurther = graph.GetEdgeWeight(canGetIntoSetOldElement.Item1, outNeighbor) ==
-                                                canGetIntoSetOldElement.Item2;
-                            bool wasThereAlready = canGetIntoSet.Contains((outNeighbor, canGetIntoSetOldElement.Item1));
-                            if (canGoFurther && !wasThereAlready)
+                            if (goalsSet.Contains(outNeighbor))
                             {
-                                if (goalsSet.Contains(outNeighbor))
-                                {
-                                    // Znalazlem trase. Ignacy bedzie zadowolony
-                                    
-                                    return (true, getPathAlt(graph, outNeighbor, canGetIntoSetOldElement.Item1, START));
-                                }
+                                // Znalazlem trase. Ignacy bedzie zadowolony
                                 
-                                canGetIntoSetNew.Add((outNeighbor, canGetIntoSetOldElement.Item1));
-                                canGetIntoSet.Add((outNeighbor, canGetIntoSetOldElement.Item1));
+                                return (true, getPathAlt(graph, outNeighbor, canGetIntoSetOldElement.Item1, startsSet));
                             }
+                            
+                            canGetIntoSetNew.Add((outNeighbor, canGetIntoSetOldElement.Item1));
+                            canGetIntoSet.Add((outNeighbor, canGetIntoSetOldElement.Item1));
                         }
                     }
-                    
-                    canGetIntoSetOld = canGetIntoSetNew;
-                    canGetIntoSetNew = new HashSet<(int, int)>();
                 }
+                
+                canGetIntoSetOld = canGetIntoSetNew;
+                canGetIntoSetNew = new HashSet<(int, int)>();
             }
 
             return (false, null);
         }
 
-        private int[] getPathAlt(DiGraph<int> graph, int goal, int goalMinus1, int startVertex)
+        private int[] getPathAlt(DiGraph<int> graph, int goal, int goalMinus1, HashSet<int> startsSet)
         {
             int dlugoscTrasy = 2;
             int vertexNow = goal;
             int vertexNowMinus1 = goalMinus1;
             int tmp;
 
-            while (vertexNowMinus1 != startVertex || -1 != graph.GetEdgeWeight(vertexNowMinus1, vertexNow))
+            while (!startsSet.Contains(vertexNowMinus1) || -1 != graph.GetEdgeWeight(vertexNowMinus1, vertexNow))
             {
                 tmp = vertexNowMinus1;
                 vertexNowMinus1 = graph.GetEdgeWeight(vertexNowMinus1, vertexNow);
@@ -164,13 +165,8 @@ namespace ASD
                 dlugoscTrasy--;
             }
 
-            outPath[0] = startVertex;
+            outPath[0] = graph.GetEdgeWeight(outPath[1], outPath[2]);
             
-            if (outPath[0] == 0 && outPath[1] == 11)
-            {
-                ;
-            }
-
             return outPath;
         }
     }
