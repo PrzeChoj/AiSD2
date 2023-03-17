@@ -88,7 +88,7 @@ namespace ASD
 
             foreach (int START in starts)
             {
-                if (goals.Contains(START))
+                if (goalsSet.Contains(START))
                 {
                     return (true, new[] { START });
                 }
@@ -165,8 +165,15 @@ namespace ASD
                 dlugoscTrasy--;
             }
 
-            outPath[0] = graph.GetEdgeWeight(outPath[1], outPath[2]);
-            
+            if (outPath.Length >= 3)
+            {
+                outPath[0] = graph.GetEdgeWeight(outPath[1], outPath[2]);                
+            }
+            else
+            {
+                outPath[0] = goalMinus1;
+            }
+
             return outPath;
         }
     }
