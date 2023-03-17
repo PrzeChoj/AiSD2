@@ -23,8 +23,31 @@ namespace ASD
             var canGetIntoSetNew = new HashSet<(int, int)>(); // W tym kroku
             
             canGetIntoSet.Add((start, -1));
-            canGetIntoSetOld.Add((start, -1));
+            canGetIntoSetOld.Add((start, graph.VertexCount)); // Nie -1, bo sztuczka optymalizacyjna, bo on jest szukany w edgesList
             canGetIntoSetOnlyVertex.Add(start);
+            
+            /// W glownej petli bede uzywal edgesList zamiast .OutNeighbors()
+            /// edgesList[i,j] posiada info do ktorych wierzcholkow mozna pojsc z i, jeli wczesniej bylem w j
+            var edgesList = new List<int>[graph.VertexCount,graph.VertexCount+1]; // +1, bo mozna przyjsc z "-1"
+            for (int i = 0; i < graph.VertexCount; i++)
+            {
+                for (int j = 0; j < graph.VertexCount+1; j++)
+                {
+                    edgesList[i,j] = new List<int>();
+                }
+            }
+            
+            /// To wpisanie ponizej nie jestem pewny, czy jest optymalne, bo uzywam .Add()
+            /// Jesli nie przejdzie, to bede kombinowal...
+            foreach (Edge<int> edge in graph.DFS().SearchAll())
+            {
+                int vertexFromMinus1 = graph.GetEdgeWeight(edge.From, edge.To);
+                if (vertexFromMinus1 == -1)
+                {
+                    vertexFromMinus1 = graph.VertexCount;
+                }
+                edgesList[edge.From, vertexFromMinus1].Add(edge.To);
+            }
 
             while (canGetIntoSetOld.Count != 0)
             {
@@ -37,12 +60,10 @@ namespace ASD
                 // Dodaj nowe
                 foreach (var canGetIntoSetOldElement in canGetIntoSetOld)
                 {
-                    foreach (int outNeighbor in graph.OutNeighbors(canGetIntoSetOldElement.Item1))
+                    foreach (int outNeighbor in edgesList[canGetIntoSetOldElement.Item1, canGetIntoSetOldElement.Item2])
                     {
-                        bool canGoFurther = graph.GetEdgeWeight(canGetIntoSetOldElement.Item1, outNeighbor) ==
-                                            canGetIntoSetOldElement.Item2;
                         bool wasThereAlready = canGetIntoSet.Contains((outNeighbor, canGetIntoSetOldElement.Item1));
-                        if (canGoFurther && !wasThereAlready)
+                        if (!wasThereAlready)
                         {
                             canGetIntoSetNew.Add((outNeighbor, canGetIntoSetOldElement.Item1));
                             canGetIntoSet.Add((outNeighbor, canGetIntoSetOldElement.Item1));
@@ -94,8 +115,32 @@ namespace ASD
                 }
 
                 canGetIntoSet.Add((START, -1));
-                canGetIntoSetOld.Add((START, -1));
+                canGetIntoSetOld.Add((START, graph.VertexCount)); // Nie -1, bo sztuczka optymalizacyjna, bo on jest szukany w edgesList
             }
+
+            /// W glownej petli bede uzywal edgesHash zamiast .OutNeighbors()
+            /// edgesHash[i,j] posiada info do ktorych wierzcholkow mozna pojsc z i, jeli wczesniej bylem w j
+            var edgesList = new List<int>[graph.VertexCount,graph.VertexCount+1]; // +1, bo mozna przyjsc z "-1"
+            for (int i = 0; i < graph.VertexCount; i++)
+            {
+                for (int j = 0; j < graph.VertexCount+1; j++)
+                {
+                    edgesList[i,j] = new List<int>();
+                }
+            }
+
+            /// To wpisanie ponizej nie jestem pewny, czy jest optymalne, bo uzywam .Add()
+            /// Jesli nie przejdzie, to bede kombinowal...
+            foreach (Edge<int> edge in graph.DFS().SearchAll())
+            {
+                int vertexFromMinus1 = graph.GetEdgeWeight(edge.From, edge.To);
+                if (vertexFromMinus1 == -1)
+                {
+                    vertexFromMinus1 = graph.VertexCount;
+                }
+                edgesList[edge.From, vertexFromMinus1].Add(edge.To);
+            }
+
 
             while (canGetIntoSetOld.Count != 0)
             {
@@ -108,17 +153,14 @@ namespace ASD
                 // Dodaj nowe
                 foreach (var canGetIntoSetOldElement in canGetIntoSetOld)
                 {
-                    foreach (int outNeighbor in graph.OutNeighbors(canGetIntoSetOldElement.Item1))
+                    foreach (int outNeighbor in edgesList[canGetIntoSetOldElement.Item1, canGetIntoSetOldElement.Item2])
                     {
-                        bool canGoFurther = graph.GetEdgeWeight(canGetIntoSetOldElement.Item1, outNeighbor) ==
-                                            canGetIntoSetOldElement.Item2;
                         bool wasThereAlready = canGetIntoSet.Contains((outNeighbor, canGetIntoSetOldElement.Item1));
-                        if (canGoFurther && !wasThereAlready)
+                        if (!wasThereAlready)
                         {
                             if (goalsSet.Contains(outNeighbor))
                             {
                                 // Znalazlem trase. Ignacy bedzie zadowolony
-                                
                                 return (true, getPathAlt(graph, outNeighbor, canGetIntoSetOldElement.Item1, startsSet));
                             }
                             
