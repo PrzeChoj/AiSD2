@@ -79,8 +79,6 @@ namespace ASD
         /// jeżeli possible == false to route ustawiamy na null</returns>
         public (bool possible, int[] route) Lab04Stage2(DiGraph<int> graph, int[] starts, int[] goals)
         {
-            var getHerefrom = new Hashtable();
-            
             var goalsSet = new HashSet<int>(goals);
             var graphNewStart = new DiGraph<int>(graph.VertexCount + 1);
             /// graphNewStart będzie tym samym, co graph z dodatkowym wierzchołkiem startowym
@@ -98,7 +96,6 @@ namespace ASD
             foreach (int start in starts)
             {
                 graphNewStart.AddEdge(graph.VertexCount, start, -1);
-                getHerefrom[start] = graph.VertexCount;
             }
             // graphNewStart jest juz zbudowany poprawnie
 
@@ -111,12 +108,6 @@ namespace ASD
             canGetIntoSet.Add((START, -1));
             canGetIntoSetOld.Add((START, -1));
             
-            if (goalsSet.Contains(START))
-            {
-                // Juz jestes tam gdzie chciales Ignacy xd
-                return (true, new []{START});
-            }
-
             while (canGetIntoSetOld.Count != 0)
             {
                 // Dodaj znalezione ostatnio do calosci
@@ -135,9 +126,6 @@ namespace ASD
                         bool wasThereAlready = canGetIntoSet.Contains((outNeighbor, canGetIntoSetOldElement.Item1));
                         if (canGoFurther && !wasThereAlready)
                         {
-                            if(!getHerefrom.Contains(outNeighbor))
-                                getHerefrom[outNeighbor] = canGetIntoSetOldElement.Item1; // Tylko pierwsze odwiedziny
-
                             if (goalsSet.Contains(outNeighbor))
                             {
                                 // Znalazlem trase. Ignacy bedzie zadowolony
