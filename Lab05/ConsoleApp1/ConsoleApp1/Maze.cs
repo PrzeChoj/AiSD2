@@ -20,7 +20,7 @@ namespace ASD
         /// <param name="t">czas zburzenia ściany (dotyczy tylko wersji II)</param> 
         public int FindShortestPath(char[,] maze, bool withDynamite, out string path, int t = 0)
         {
-            Graph<int> g = new Graph<int>(maze.Length);
+            DiGraph<int> g = new DiGraph<int>(maze.Length);
             int iMax = maze.GetLength(0);
             int jMax = maze.GetLength(1);
             int startVertex = -1;
@@ -30,7 +30,7 @@ namespace ASD
             {
                 for (int j = 0; j < jMax - 1; j++)
                 {
-                    if (maze[i, j] == 'X')
+                    if (maze[i, j] == 'X' && !withDynamite)
                     {
                         continue;
                     }
@@ -42,13 +42,25 @@ namespace ASD
                     {
                         endVertex = Maze.VertexFromCoordinates(i, j, jMax);
                     }
+                    
+                    int wagaPowrotu = 1;
+                    if(maze[i,j] == 'X')
+                        wagaPowrotu = t + 1;
 
                     bool canGoDown = maze[i + 1, j] != 'X';
-                    
                     if (canGoDown)
                     {
                         g.AddEdge(Maze.VertexFromCoordinates(i, j, jMax),
                             Maze.VertexFromCoordinates(i + 1, j, jMax), 1);
+                        g.AddEdge(Maze.VertexFromCoordinates(i + 1, j, jMax),
+                            Maze.VertexFromCoordinates(i, j, jMax), wagaPowrotu);
+                    }
+                    else if (withDynamite)
+                    {
+                        g.AddEdge(Maze.VertexFromCoordinates(i, j, jMax),
+                            Maze.VertexFromCoordinates(i + 1, j, jMax), t + 1);
+                        g.AddEdge(Maze.VertexFromCoordinates(i + 1, j, jMax),
+                            Maze.VertexFromCoordinates(i, j, jMax), wagaPowrotu);
                     }
                     
                     bool canGoRight = maze[i, j + 1] != 'X';
@@ -56,6 +68,15 @@ namespace ASD
                     {
                         g.AddEdge(Maze.VertexFromCoordinates(i, j, jMax),
                             Maze.VertexFromCoordinates(i, j + 1, jMax), 1);
+                        g.AddEdge(Maze.VertexFromCoordinates(i, j + 1, jMax),
+                            Maze.VertexFromCoordinates(i, j, jMax), wagaPowrotu);
+                    }
+                    else if (withDynamite)
+                    {
+                        g.AddEdge(Maze.VertexFromCoordinates(i, j, jMax),
+                            Maze.VertexFromCoordinates(i, j + 1, jMax), t + 1);
+                        g.AddEdge(Maze.VertexFromCoordinates(i, j + 1, jMax),
+                            Maze.VertexFromCoordinates(i, j, jMax), wagaPowrotu);
                     }
                 }
             }
@@ -76,18 +97,31 @@ namespace ASD
                     endVertex = Maze.VertexFromCoordinates(iMax - 1, j, jMax);
                 }
                 
+                int wagaPowrotu = 1;
+                if(maze[iMax - 1, j] == 'X')
+                    wagaPowrotu = t + 1;
+                
                 bool canGoRight = maze[iMax - 1, j + 1] != 'X';
                 if (canGoRight)
                 {
                     g.AddEdge(Maze.VertexFromCoordinates(iMax - 1, j, jMax),
                         Maze.VertexFromCoordinates(iMax - 1, j + 1, jMax), 1);
+                    g.AddEdge(Maze.VertexFromCoordinates(iMax - 1, j + 1, jMax),
+                        Maze.VertexFromCoordinates(iMax - 1, j, jMax), wagaPowrotu);
+                }
+                else if(withDynamite)
+                {
+                    g.AddEdge(Maze.VertexFromCoordinates(iMax - 1, j, jMax),
+                        Maze.VertexFromCoordinates(iMax - 1, j + 1, jMax), t + 1);
+                    g.AddEdge(Maze.VertexFromCoordinates(iMax - 1, j + 1, jMax),
+                        Maze.VertexFromCoordinates(iMax - 1, j, jMax), wagaPowrotu);
                 }
             }
             
             // Ostatnia kolumna
             for (int i = 0; i < iMax - 1; i++)
             {
-                if (maze[i, jMax - 1] == 'X')
+                if (maze[i, jMax - 1] == 'X' && !withDynamite)
                 {
                     continue;
                 }
@@ -100,11 +134,24 @@ namespace ASD
                     endVertex = Maze.VertexFromCoordinates(i, jMax - 1, jMax);
                 }
                 
+                int wagaPowrotu = 1;
+                if(maze[i, jMax - 1] == 'X')
+                    wagaPowrotu = t + 1;
+                
                 bool canGoDown = maze[i + 1, jMax - 1] != 'X';
                 if (canGoDown)
                 {
                     g.AddEdge(Maze.VertexFromCoordinates(i, jMax - 1, jMax),
                         Maze.VertexFromCoordinates(i + 1, jMax - 1, jMax), 1);
+                    g.AddEdge(Maze.VertexFromCoordinates(i + 1, jMax - 1, jMax),
+                        Maze.VertexFromCoordinates(i, jMax - 1, jMax), wagaPowrotu);
+                }
+                else if(withDynamite)
+                {
+                    g.AddEdge(Maze.VertexFromCoordinates(i, jMax - 1, jMax),
+                        Maze.VertexFromCoordinates(i + 1, jMax - 1, jMax), t+1);
+                    g.AddEdge(Maze.VertexFromCoordinates(i + 1, jMax - 1, jMax),
+                        Maze.VertexFromCoordinates(i, jMax - 1, jMax), wagaPowrotu);
                 }
             }
             
@@ -118,7 +165,7 @@ namespace ASD
                 endVertex = Maze.VertexFromCoordinates(iMax - 1, jMax - 1, jMax);
             }
             
-            // g jest ładnym grafem takim jak chcemy
+            // g jest ladnym grafem takim jak chcemy
 
             PathsInfo<int> pathsInfo = Paths.BellmanFord(g, startVertex);
 
