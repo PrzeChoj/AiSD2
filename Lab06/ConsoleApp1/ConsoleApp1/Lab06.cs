@@ -62,7 +62,7 @@ namespace Lab06
 
             while (q.Count != 0)
             {
-                var v = (int)q.Dequeue()!;
+                var v = (int)q.Dequeue();
                 if (v % n == 0)
                 {
                     return true;
