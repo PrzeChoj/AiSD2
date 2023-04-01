@@ -88,7 +88,12 @@ namespace Lab06
         {
             foreach ((int color, int cityA, int cityB) borderGate in borderGates)
             {
-                if (((borderGate.cityA - from) % n != 0) || ((borderGate.cityB - to) % n != 0))
+                bool goFromCityA = (from - borderGate.cityA) % n == 0;
+                bool goFromCityB = (from - borderGate.cityB) % n == 0;
+                bool goToCityA = (to - borderGate.cityA) % n == 0;
+                bool goToCityB = (to - borderGate.cityB) % n == 0;
+                bool borderIsBetweenCities = (goFromCityA && goToCityB) || (goFromCityB && goToCityA);
+                if (!borderIsBetweenCities)
                     continue;
                 if (!CanGo((from - 1) / n, borderGate.color))
                     return true;
