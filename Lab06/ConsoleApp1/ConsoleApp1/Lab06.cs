@@ -73,7 +73,7 @@ namespace Lab06
                         continue;
                     // Ustawe flage waga == -1, ze nie mozna przejsc
                     // Ale, tak zrobie tylko jesli jest taka krawedz
-                      // A moze jej nie byc, bo jest klucznik w vartexi
+                      // A moze jej nie byc, gdy jest klucznik w vartexi
                     if(myMap.HasEdge(vertex1, vertex2))
                         myMap.SetEdgeWeight(vertex1, vertex2, -1);
                     if(myMap.HasEdge(vertex2, vertex1))
@@ -94,16 +94,19 @@ namespace Lab06
                 {
                     return true;
                 }
-
+                
                 foreach (int outNeighbor in myMap.OutNeighbors(v))
                 {
                     bool juzTuBylem = odwiedzone.Contains(outNeighbor);
                     bool zamknietaBrama = myMap.GetEdgeWeight(v, outNeighbor) == -1;
                     if (juzTuBylem || zamknietaBrama)
                         continue;
-                    // OPTIMIZE Tu bym mogl sprawdzac, czy doszedlem do konca
                     odwiedzone.Add(outNeighbor);
                     q.Enqueue(outNeighbor);
+                    if (outNeighbor % n == 0)
+                    {
+                        return true;
+                    }
                 }
             }
 
@@ -179,7 +182,7 @@ namespace Lab06
                         continue;
                     // Ustawe flage waga == -1, ze nie mozna przejsc
                     // Ale, tak zrobie tylko jesli jest taka krawedz
-                    // A moze jej nie byc, bo jest klucznik w vartexi
+                    // A moze jej nie byc, gdy jest klucznik w vartexi
                     if(myMap.HasEdge(vertex1, vertex2))
                         myMap.SetEdgeWeight(vertex1, vertex2, -1);
                     if(myMap.HasEdge(vertex2, vertex1))
@@ -207,10 +210,14 @@ namespace Lab06
                     bool zamknietaBrama = myMap.GetEdgeWeight(v, outNeighbor) == -1;
                     if (juzTuBylem || zamknietaBrama)
                         continue;
-                    // OPTIMIZE Tu bym mogl sprawdzac, czy doszedlem do konca
                     odwiedzone.Add(outNeighbor);
                     q.Enqueue(outNeighbor);
                     krokWstecz.Add(outNeighbor, v); // Dla ustalenia scieszki
+                    
+                    if (outNeighbor % n == 0)
+                    {
+                        return (true, GetTrasaLeangth(outNeighbor, krokWstecz, myMap));
+                    }
                 }
             }
 
