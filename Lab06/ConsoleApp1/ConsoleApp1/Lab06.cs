@@ -24,15 +24,7 @@ namespace Lab06
 
             var myMap = new DiGraph<int>(n * p2 + 1); // p2 kopii mapy. Kazda kopia mowi jakiego rodzaje klucze mamy
 
-            foreach (var edge in g.BFS().SearchAll())
-            {
-                for (int i = 0; i < p2; i++)
-                { // TODO Dodawac tylko te, co nie maja blokad
-                    myMap.AddEdge(i * n + edge.From, i * n + edge.To, edge.Weight);
-                    myMap.AddEdge(i * n + edge.To, i * n + edge.From, edge.Weight);
-                }
-            }
-            // Kopje mapy gotowe
+            var youCanCollectKey = new HashSet<int>();
             
             // Zrobic przjscia gdy zbieramy klucz
             int[] keysList = new int[n+1]; // Mowi jakie klucze dostaniemy w i-tym
@@ -51,11 +43,27 @@ namespace Lab06
                 {
                     if (j == (j | keysList[i]))
                         continue;
-                    myMap.AddEdge(j * n + i, (j | keysList[i]) * n + i, 0); // OPTIMIZE zapisac, ze z tego wierzcholka jest krawedz o wadze 0 i tylko nia pozniej isc w Djikstr-ze
+                    youCanCollectKey.Add(j * n + i);
+                    myMap.AddEdge(j * n + i, (j | keysList[i]) * n + i, 0);
                 }
             }
             
-            // zakazac przechodzenia na bramach bede robil w Djikstr-ie
+            foreach (var edge in g.BFS().SearchAll())
+            {
+                for (int i = 0; i < p2; i++)
+                {
+                    int vertex1 = i * n + edge.From;
+                    int vertex2 = i * n + edge.To;
+                    if(JestBramaZamknieta(n, vertex1, vertex2, borderGates))
+                        continue;
+                    if(!youCanCollectKey.Contains(vertex1))
+                        myMap.AddEdge(vertex1, vertex2, edge.Weight);
+                    if(!youCanCollectKey.Contains(vertex2))
+                        myMap.AddEdge(vertex2, vertex1, edge.Weight);
+                }
+            }
+            // Kopje mapy gotowe
+            
             var q = new Queue();
             q.Enqueue(1);
             var odwiedzone = new HashSet<int> { 1 };
@@ -72,8 +80,6 @@ namespace Lab06
                 {
                     bool juzTuBylem = odwiedzone.Contains(outNeighbor);
                     if (juzTuBylem)
-                        continue;
-                    if(JestBramaZamknieta(n, v, outNeighbor, borderGates))
                         continue;
                     // OPTIMIZE Tu bym mogl sprawdzac, czy doszedlem do konca
                     odwiedzone.Add(outNeighbor);
@@ -122,16 +128,8 @@ namespace Lab06
 
             var myMap = new DiGraph<int>(n * p2 + 1); // p2 kopii mapy. Kazda kopia mowi jakiego rodzaje klucze mamy
 
-            foreach (var edge in g.BFS().SearchAll())
-            {
-                for (int i = 0; i < p2; i++)
-                { // TODO Dodawac tylko te, co nie maja blokad
-                    myMap.AddEdge(i * n + edge.From, i * n + edge.To, edge.Weight);
-                    myMap.AddEdge(i * n + edge.To, i * n + edge.From, edge.Weight);
-                }
-            }
-            // Kopje mapy gotowe
-            
+            var youCanCollectKey = new HashSet<int>();
+
             // Zrobic przjscia gdy zbieramy klucz
             int[] keysList = new int[n+1]; // Mowi jakie klucze dostaniemy w i-tym
 
@@ -149,11 +147,27 @@ namespace Lab06
                 {
                     if (j == (j | keysList[i]))
                         continue;
-                    myMap.AddEdge(j * n + i, (j | keysList[i]) * n + i, 0); // OPTIMIZE zapisac, ze z tego wierzcholka jest krawedz o wadze 0 i tylko nia pozniej isc w Djikstr-ze
+                    youCanCollectKey.Add(j * n + i);
+                    myMap.AddEdge(j * n + i, (j | keysList[i]) * n + i, 0);
                 }
             }
             
-            // zakazac przechodzenia na bramach bede robil w Djikstr-ie
+            foreach (var edge in g.BFS().SearchAll())
+            {
+                for (int i = 0; i < p2; i++)
+                {
+                    int vertex1 = i * n + edge.From;
+                    int vertex2 = i * n + edge.To;
+                    if(JestBramaZamknieta(n, vertex1, vertex2, borderGates))
+                        continue;
+                    if(!youCanCollectKey.Contains(vertex1))
+                        myMap.AddEdge(vertex1, vertex2, edge.Weight);
+                    if(!youCanCollectKey.Contains(vertex2))
+                        myMap.AddEdge(vertex2, vertex1, edge.Weight);
+                }
+            }
+            // Kopje mapy gotowe
+
             var q = new Queue();
             q.Enqueue(1);
             var odwiedzone = new HashSet<int> { 1 };
@@ -171,8 +185,6 @@ namespace Lab06
                 {
                     bool juzTuBylem = odwiedzone.Contains(outNeighbor);
                     if (juzTuBylem)
-                        continue;
-                    if(JestBramaZamknieta(n, v, outNeighbor, borderGates))
                         continue;
                     // OPTIMIZE Tu bym mogl sprawdzac, czy doszedlem do konca
                     odwiedzone.Add(outNeighbor);
