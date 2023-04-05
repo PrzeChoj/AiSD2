@@ -54,14 +54,33 @@ namespace Lab06
                 {
                     int vertex1 = i * n + edge.From;
                     int vertex2 = i * n + edge.To;
-                    if(JestBramaZamknieta(n, vertex1, vertex2, borderGates))
-                        continue;
                     if(!youCanCollectKey.Contains(vertex1))
                         myMap.AddEdge(vertex1, vertex2, edge.Weight);
                     if(!youCanCollectKey.Contains(vertex2))
                         myMap.AddEdge(vertex2, vertex1, edge.Weight);
                 }
             }
+            
+            // Usunac krawedzie z bramami
+            foreach ((int color, int cityA, int cityB) borderGate in borderGates)
+            {
+                for (int i = 0; i < p2; i++)
+                {
+                    int vertex1 = i * n + borderGate.cityA;
+                    int vertex2 = i * n + borderGate.cityB;
+
+                    if(CanGo((vertex1 - 1) / n, borderGate.color))
+                        continue;
+                    // Ustawe flage waga == -1, ze nie mozna przejsc
+                    // Ale, tak zrobie tylko jesli jest taka krawedz
+                      // A moze jej nie byc, bo jest klucznik w vartexi
+                    if(myMap.HasEdge(vertex1, vertex2))
+                        myMap.SetEdgeWeight(vertex1, vertex2, -1);
+                    if(myMap.HasEdge(vertex2, vertex1))
+                        myMap.SetEdgeWeight(vertex2, vertex1, -1);
+                }
+            }
+
             // Kopje mapy gotowe
             
             var q = new Queue();
@@ -79,30 +98,13 @@ namespace Lab06
                 foreach (int outNeighbor in myMap.OutNeighbors(v))
                 {
                     bool juzTuBylem = odwiedzone.Contains(outNeighbor);
-                    if (juzTuBylem)
+                    bool zamknietaBrama = myMap.GetEdgeWeight(v, outNeighbor) == -1;
+                    if (juzTuBylem || zamknietaBrama)
                         continue;
                     // OPTIMIZE Tu bym mogl sprawdzac, czy doszedlem do konca
                     odwiedzone.Add(outNeighbor);
                     q.Enqueue(outNeighbor);
                 }
-            }
-
-            return false;
-        }
-
-        private static bool JestBramaZamknieta(int n, int from, int to, (int color, int cityA, int cityB)[] borderGates)
-        {
-            foreach ((int color, int cityA, int cityB) borderGate in borderGates)
-            {
-                bool goFromCityA = (from - borderGate.cityA) % n == 0;
-                bool goFromCityB = (from - borderGate.cityB) % n == 0;
-                bool goToCityA = (to - borderGate.cityA) % n == 0;
-                bool goToCityB = (to - borderGate.cityB) % n == 0;
-                bool borderIsBetweenCities = (goFromCityA && goToCityB) || (goFromCityB && goToCityA);
-                if (!borderIsBetweenCities)
-                    continue;
-                if (!CanGo((from - 1) / n, borderGate.color))
-                    return true;
             }
 
             return false;
@@ -158,12 +160,30 @@ namespace Lab06
                 {
                     int vertex1 = i * n + edge.From;
                     int vertex2 = i * n + edge.To;
-                    if(JestBramaZamknieta(n, vertex1, vertex2, borderGates))
-                        continue;
                     if(!youCanCollectKey.Contains(vertex1))
                         myMap.AddEdge(vertex1, vertex2, edge.Weight);
                     if(!youCanCollectKey.Contains(vertex2))
                         myMap.AddEdge(vertex2, vertex1, edge.Weight);
+                }
+            }
+            
+            // Usunac krawedzie z bramami
+            foreach ((int color, int cityA, int cityB) borderGate in borderGates)
+            {
+                for (int i = 0; i < p2; i++)
+                {
+                    int vertex1 = i * n + borderGate.cityA;
+                    int vertex2 = i * n + borderGate.cityB;
+
+                    if(CanGo((vertex1 - 1) / n, borderGate.color))
+                        continue;
+                    // Ustawe flage waga == -1, ze nie mozna przejsc
+                    // Ale, tak zrobie tylko jesli jest taka krawedz
+                    // A moze jej nie byc, bo jest klucznik w vartexi
+                    if(myMap.HasEdge(vertex1, vertex2))
+                        myMap.SetEdgeWeight(vertex1, vertex2, -1);
+                    if(myMap.HasEdge(vertex2, vertex1))
+                        myMap.SetEdgeWeight(vertex2, vertex1, -1);
                 }
             }
             // Kopje mapy gotowe
@@ -184,7 +204,8 @@ namespace Lab06
                 foreach (int outNeighbor in myMap.OutNeighbors(v))
                 {
                     bool juzTuBylem = odwiedzone.Contains(outNeighbor);
-                    if (juzTuBylem)
+                    bool zamknietaBrama = myMap.GetEdgeWeight(v, outNeighbor) == -1;
+                    if (juzTuBylem || zamknietaBrama)
                         continue;
                     // OPTIMIZE Tu bym mogl sprawdzac, czy doszedlem do konca
                     odwiedzone.Add(outNeighbor);
