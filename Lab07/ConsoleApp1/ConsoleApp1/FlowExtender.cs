@@ -47,25 +47,25 @@ namespace ASD
                     throw new Exception("Nie powinno byc takich krawedzi. Jesli usunalem, to nie wrocilem do niej");
                 } 
                 
+                double oldEdgeWeightForward = residualNet.GetEdgeWeight(edge.From, edge.To);
+                bool chcemyUsunacKrawedz = oldEdgeWeightForward - edge.Weight == 0;
+                if (chcemyUsunacKrawedz)
+                {
+                    residualNet.RemoveEdge(edge.From, edge.To);
+                }
+                else
+                {
+                    residualNet.SetEdgeWeight(edge.From, edge.To, oldEdgeWeightForward - edge.Weight);
+                }
+                
                 bool jestBackward = residualNet.HasEdge(edge.To, edge.From);
                 if (jestBackward)
                 {
-                    double oldEdgeWeightForward = residualNet.GetEdgeWeight(edge.From, edge.To);
                     double oldEdgeWeightBackward = residualNet.GetEdgeWeight(edge.To, edge.From);
-                    if (oldEdgeWeightForward - edge.Weight == 0)
-                    {
-                        residualNet.RemoveEdge(edge.From, edge.To);
-                    }
-                    else
-                    {
-                        residualNet.SetEdgeWeight(edge.From, edge.To, oldEdgeWeightForward - edge.Weight);                        
-                    }
                     residualNet.SetEdgeWeight(edge.To, edge.From, oldEdgeWeightBackward + edge.Weight);
                 }
                 else
                 {
-                    double oldEdgeWeightForward = residualNet.GetEdgeWeight(edge.From, edge.To);
-                    residualNet.SetEdgeWeight(edge.From, edge.To, oldEdgeWeightForward - edge.Weight);
                     residualNet.AddEdge(edge.To, edge.From, edge.Weight);
                 }
             }
