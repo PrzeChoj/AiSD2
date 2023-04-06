@@ -74,7 +74,7 @@ namespace ASD
             HashSet<int> SSet = new HashSet<int>(s);
             foreach (Edge<double> edge in residualNet.DFS().SearchFrom(s))
             {
-                SSet.Add(edge.From);
+                SSet.Add(edge.To);
             }
             
             HashSet<int> TSet = new HashSet<int>(s);
@@ -90,7 +90,7 @@ namespace ASD
 
             double outValue = 0;
             var minCut2 = new List<Edge<double>>();
-            foreach (Edge<double> edge in residualNet.DFS().SearchFrom(s))
+            foreach (Edge<double> edge in directedGraph.DFS().SearchFrom(s))
             {
                 bool fromIsInS = SSet.Contains(edge.From);
                 bool fromIsInT = TSet.Contains(edge.From);
