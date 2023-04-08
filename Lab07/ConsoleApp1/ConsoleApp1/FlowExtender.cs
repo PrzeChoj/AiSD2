@@ -1,6 +1,5 @@
 ﻿using ASD.Graphs;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +11,7 @@ namespace ASD
     {
 
         /// <summary>
-        /// Metod wylicza minimalny s-t-przekrój.
+        /// Metoda wylicza minimalny s-t-przekrój.
         /// </summary>
         /// <param name="undirectedGraph">Nieskierowany graf</param>
         /// <param name="s">wierzchołek źródłowy</param>
@@ -21,90 +20,49 @@ namespace ASD
         /// <returns>wartość przekroju</returns>
         public static double MinCut(this Graph<double> undirectedGraph, int s, int t, out Edge<double>[] minCut)
         {
-            DiGraph<double> directedGraph = new DiGraph<double>(undirectedGraph.VertexCount);
-            foreach (Edge<double> edge in undirectedGraph.DFS().SearchAll())
+            DiGraph<double> directed = new DiGraph<double>(undirectedGraph.VertexCount, undirectedGraph.Representation);
+            foreach (var e in undirectedGraph.BFS().SearchAll())
+                directed.AddEdge(e.From, e.To, e.Weight); // To sa wobie strony, bo BFS zwraca krawedzie w obie strony
+
+            (var val, var flow) = Flows.FordFulkerson(directed, s, t);
+
+            List<Edge<double>> cut = new List<Edge<double>>();
+            bool[] set = new bool[undirectedGraph.VertexCount];
+
+            DiGraph<double> residual = new DiGraph<double>(flow.VertexCount, flow.Representation);
+
+            foreach (var e in directed.BFS().SearchAll())
             {
-                undirectedGraph.AddEdge(edge.From, edge.To, edge.Weight);
-                undirectedGraph.AddEdge(edge.To, edge.From, edge.Weight);
+                double f = flow.HasEdge(e.From, e.To) ? flow.GetEdgeWeight(e.From, e.To) : 0;
+                double frev = flow.HasEdge(e.To, e.From) ? flow.GetEdgeWeight(e.To, e.From) : 0;
+
+                double c = e.Weight - f + frev;
+                if (c > 0) residual.AddEdge(e.From, e.To, c);
+
+                if (!directed.HasEdge(e.To, e.From) && f > 0)
+                {
+                    residual.AddEdge(e.To, e.From, f);
+                }
+               
             }
 
-            var (maxFlowValue, maxFlow) = Flows.FordFulkerson(undirectedGraph, s, t);
-            
-            // Mam maksymalny przeplyw
-            // Zbuduje siec rezydualna
-            
-            DiGraph<double> residualNet = new DiGraph<double>(undirectedGraph.VertexCount);
-            foreach (Edge<double> edge in undirectedGraph.DFS().SearchAll())
+            set[s] = true;
+            foreach (var e in residual.BFS().SearchFrom(s))
             {
-                residualNet.AddEdge(edge.From, edge.To, edge.Weight);
+                set[e.To] = true;
             }
 
-            foreach (Edge<double> edge in maxFlow.DFS().SearchAll())
+            // Krawedzie na pograniczu zbiorow S i T
+            for (int i = 0; i < undirectedGraph.VertexCount; i++)
             {
-                bool jestForward = residualNet.HasEdge(edge.From, edge.To);
-                if (!jestForward)
-                {
-                    throw new Exception("Nie powinno byc takich krawedzi. Jesli usunalem, to nie wrocilem do niej");
-                } 
-                
-                double oldEdgeWeightForward = residualNet.GetEdgeWeight(edge.From, edge.To);
-                bool chcemyUsunacKrawedz = oldEdgeWeightForward - edge.Weight == 0;
-                if (chcemyUsunacKrawedz)
-                {
-                    residualNet.RemoveEdge(edge.From, edge.To);
-                }
-                else
-                {
-                    residualNet.SetEdgeWeight(edge.From, edge.To, oldEdgeWeightForward - edge.Weight);
-                }
-                
-                bool jestBackward = residualNet.HasEdge(edge.To, edge.From);
-                if (jestBackward)
-                {
-                    double oldEdgeWeightBackward = residualNet.GetEdgeWeight(edge.To, edge.From);
-                    residualNet.SetEdgeWeight(edge.To, edge.From, oldEdgeWeightBackward + edge.Weight);
-                }
-                else
-                {
-                    residualNet.AddEdge(edge.To, edge.From, edge.Weight);
-                }
-            }
-            
-            
-            HashSet<int> SSet = new HashSet<int>(s);
-            foreach (Edge<double> edge in residualNet.DFS().SearchFrom(s))
-            {
-                SSet.Add(edge.To);
-            }
-            
-            HashSet<int> TSet = new HashSet<int>(s);
-            for (int i = 0; i < directedGraph.VertexCount; i++)
-            {
-                if (!SSet.Contains(i))
-                {
-                    TSet.Add(i);
-                }
-            }
-            
-            // Wiem, ze przekroj to wrzystkie krawedzie między TSet, a SSet
+                if (!set[i]) continue;
 
-            double outValue = 0;
-            var minCut2 = new List<Edge<double>>();
-            foreach (Edge<double> edge in directedGraph.DFS().SearchFrom(s))
-            {
-                bool fromIsInS = SSet.Contains(edge.From);
-                bool fromIsInT = TSet.Contains(edge.From);
-                bool toIsInS = SSet.Contains(edge.From);
-                bool toIsInT = TSet.Contains(edge.From);
-                if ((fromIsInS && toIsInT) || (toIsInS && fromIsInT))
-                {
-                    outValue += edge.Weight;
-                    minCut2.Add(edge);
-                }
+                cut.AddRange(undirectedGraph.OutEdges(i).Where(e => !set[e.To]));
             }
 
-            minCut = minCut2.ToArray();
-            return outValue;
+            minCut = cut.ToArray();
+
+            return val;
         }
 
         /// <summary>
@@ -115,9 +73,19 @@ namespace ASD
         /// <returns>spójność krawędziowa</returns>
         public static int EdgeConnectivity(this Graph<double> undirectedGraph, out Edge<double>[] cutingSet)
         {
-            cutingSet = null;
-            return 0;
+            Edge<double>[] minCut = null!;
+            double minVal = double.PositiveInfinity;
+            for (int i=1; i<undirectedGraph.VertexCount; i++)
+            {
+                double val = undirectedGraph.MinCut(0, i, out var cut);
+                if (val < minVal)
+                {
+                    minVal = val;
+                    minCut = cut;
+                }
+            }
+            cutingSet = minCut;
+            return (int)minVal;
         }
-        
     }
 }
