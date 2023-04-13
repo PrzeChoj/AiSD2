@@ -21,8 +21,9 @@ namespace Lab08
             // Bedzie days*hours_in_day kopii oryginalnego grafu
             // Jesli krawedz miedzy 1, a 9 bedzie 10, to znaczy, ze bedzie polaczenie o 10 do gory
 
-            int s = n * days * hours_in_day + n;
-            int t = n * days * hours_in_day + n + 1;
+            int T_max = days * hours_in_day - 1;
+            int s = (T_max + 1) * n;
+            int t = s + 1;
 
             int maxWeight = 0;
             foreach ((int where, int num_of_crews) ship in ships)
@@ -30,7 +31,7 @@ namespace Lab08
                 maxWeight += ship.num_of_crews;
             }
             
-            var my_g = new DiGraph<int>(n * days * hours_in_day + n + 2); // TODO pomyslec, czy powinno byc to + n
+            var my_g = new DiGraph<int>(t + 1);
             
             // Krawedzie ze sztucznego poczatku
             foreach ((int where, int num_of_crews) startingShips in ships)
@@ -41,7 +42,7 @@ namespace Lab08
             foreach ((int from, int to, int distance) edge in paths)
             {
                 int T = 0; // Czas w godzinach
-                while (T + edge.distance <= days * hours_in_day)
+                while (T + edge.distance <= T_max)
                 {
                     my_g.AddEdge(n * T + edge.from, n * (T + edge.distance) + edge.to, maxWeight);
                     my_g.AddEdge(n * T + edge.to, n * (T + edge.distance) + edge.from, maxWeight);
@@ -52,28 +53,22 @@ namespace Lab08
             // Krawedzie dla zalog, ktore czekaja sobie w jakims porcie
             for (int i = 0; i < n; i++)
             {
-                for (int T = 0; T <= days * hours_in_day; T++)
+                for (int T = 0; T < T_max; T++)
                 {
-                    my_g.AddEdge(T * n + i, days * hours_in_day + i, maxWeight);
+                    my_g.AddEdge(T * n + i, T_max * n + i, maxWeight);
                 }
             }
             
             // Krawedzie do sztucznego konca
             for (int i = 0; i < n; i++)
             {
-                my_g.AddEdge(n * days * hours_in_day + i, t, 1);
+                my_g.AddEdge(n * T_max + i, t, 1);
             }
 
             // Odpalamy Forda Fulkersona
-            (var x, var y) = ASD.Graphs.Flows.FordFulkerson(my_g, s, t);
+            var (x, y) = ASD.Graphs.Flows.FordFulkerson(my_g, s, t);
 
-            int outNumber = 0;
-            foreach (Edge<int> edge in y.OutEdges(s))
-            {
-                outNumber += edge.Weight;
-            }
-            
-            return outNumber;
+            return y.OutEdges(s).Sum(edge => edge.Weight);
         }
 
 
