@@ -101,11 +101,6 @@ namespace Lab08
                 int T = 0; // Czas w godzinach
                 while (T + edge.distance <= T_max)
                 {
-                    if (T % hours_in_day + edge.distance > hours_in_day) // Nie zdazymy tej nocy
-                    {
-                        T++;
-                        continue;
-                    }
                     my_g.AddEdge(n * T + edge.from, n * (T + edge.distance) + edge.to, maxWeight);
                     my_g.AddEdge(n * T + edge.to, n * (T + edge.distance) + edge.from, maxWeight);
                     T++;
@@ -117,15 +112,7 @@ namespace Lab08
             {
                 for (int T = 0; T < T_max; T++)
                 {
-                    my_g.AddEdge(T * n + i, T_max * n + i, maxWeight); // Czekamy do konca
-                    
-                    // Czekamy do nastepnego dnia:
-                    int nextDay = T + (12 - T % hours_in_day);
-                    if (nextDay >= T_max)
-                    {
-                        continue;
-                    }
-                    my_g.AddEdge(T * n + i, nextDay * n + i, maxWeight);
+                    my_g.AddEdge(T * n + i, T_max * n + i, maxWeight);
                 }
             }
             
