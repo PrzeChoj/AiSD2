@@ -78,16 +78,13 @@ namespace Lab08
             // Bedzie days*hours_in_day kopii oryginalnego grafu
             // Jesli krawedz miedzy 1, a 9 bedzie 10, to znaczy, ze bedzie polaczenie o 10 do gory
 
-            int T_max = days * hours_in_day - 1;
+            // Dzien na 12 godzin, ale 13 istotnych momentow. Trzeba rozroznic poczatek dnia od konca
+            int T_max = days * (hours_in_day + 1); // Ostatni 1 jest teoretycznie nie potrzebny, bo i tak do niego wchodzi i wychodzi jedna krawedz o wadze 1, ale dla wygodyja dodam
             int s = (T_max + 1) * n;
             int t = s + 1;
 
-            int maxWeight = 0;
-            foreach ((int where, int num_of_crews) ship in ships)
-            {
-                maxWeight += ship.num_of_crews;
-            }
-            
+            int maxWeight = ships.Sum(ship => ship.num_of_crews);
+
             var my_g = new DiGraph<int>(t + 1);
             
             // Krawedzie ze sztucznego poczatku
@@ -99,20 +96,49 @@ namespace Lab08
             foreach ((int from, int to, int distance) edge in paths)
             {
                 int T = 0; // Czas w godzinach
-                while (T + edge.distance <= T_max)
+                while (T + edge.distance < T_max)
                 {
+                    int hourThisDay = T % (hours_in_day + 1);
+                    if (hourThisDay + edge.distance > hours_in_day) // Nie zdazymy tej nocy
+                    {
+                        T++; // TODO Optimize: dodaj wiecej
+                        continue;
+                    }
                     my_g.AddEdge(n * T + edge.from, n * (T + edge.distance) + edge.to, maxWeight);
                     my_g.AddEdge(n * T + edge.to, n * (T + edge.distance) + edge.from, maxWeight);
                     T++;
                 }
             }
             
-            // Krawedzie dla zalog, ktore czekaja sobie w jakims porcie
+            // Krawedzie dla zalog, ktore czekaja sobie w jakims porcie do konca
             for (int i = 0; i < n; i++)
             {
                 for (int T = 0; T < T_max; T++)
                 {
-                    my_g.AddEdge(T * n + i, T_max * n + i, maxWeight);
+                    my_g.AddEdge(T * n + i, T_max * n + i, 1); // TODO Moze nie moze tu nocowac ta zaloga?
+                }
+            }
+            
+            // Krawedzie dla zalog, ktore czekaja sobie w jakims porcie do ostatniej godziny tego dnia:
+            for (int i = 0; i < n; i++)
+            {
+                for (int T = 0; T < T_max; T++)
+                {
+                    if ((T+1) % 13 == 0)
+                    {
+                        my_g.AddEdge(T * n + i, (T + 1) * n + i, 1); // Spanko, tylko 1 osoba
+                    }
+                    else
+                    {
+                        int hourThisDay = T % (hours_in_day + 1);
+                        int thisDayEnds = T + (12 - hourThisDay);
+                        if (thisDayEnds >= T_max)
+                        {
+                            continue; // Nie ma juz nastepnego dnia :<
+                        }
+                        
+                        my_g.AddEdge(T * n + i, thisDayEnds * n + i, maxWeight);
+                    }
                 }
             }
             
