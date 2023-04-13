@@ -80,7 +80,8 @@ namespace Lab08
 
             // Dzien na 12 godzin, ale 13 istotnych momentow. Trzeba rozroznic poczatek dnia od konca
             int T_max = days * (hours_in_day + 1); // Ostatni 1 jest teoretycznie nie potrzebny, bo i tak do niego wchodzi i wychodzi jedna krawedz o wadze 1, ale dla wygodyja dodam
-            int s = (T_max + 1) * n;
+            int startOfStars = (T_max + 1) * n;
+            int s = startOfStars + n;
             int t = s + 1;
 
             int maxWeight = ships.Sum(ship => ship.num_of_crews);
@@ -88,11 +89,19 @@ namespace Lab08
             var my_g = new DiGraph<int>(t + 1);
             
             // Krawedzie ze sztucznego poczatku
-            foreach ((int where, int num_of_crews) startingShips in ships)
+            foreach (var startingShip in ships) // Do sztucznego startu
             {
-                my_g.AddEdge(s, startingShips.where, startingShips.num_of_crews);
+                my_g.AddEdge(s,  startOfStars + startingShip.where, startingShip.num_of_crews);
+            }
+            for (int j = 0; j < n; j++) // Do poczatku dnia - kiedy ruszaja, zejscie ze statku
+            {
+                for (int i = 0; i < days; i++)
+                {
+                    my_g.AddEdge(startOfStars + j, (i * (hours_in_day + 1) + 1) * n + j, maxWeight);
+                }
             }
 
+            // Podroze godzinowe
             foreach ((int from, int to, int distance) edge in paths)
             {
                 int T = 0; // Czas w godzinach
