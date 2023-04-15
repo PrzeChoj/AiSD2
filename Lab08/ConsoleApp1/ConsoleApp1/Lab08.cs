@@ -1,9 +1,10 @@
 ﻿using ASD.Graphs;
+using System;
 
 namespace Lab08
 {
 
-    internal class ColumbExpedition
+    public class ColumbExpedition : MarshalByRefObject
     {
         private int hours_in_day = 12;
         public ColumbExpedition() { }
@@ -68,7 +69,10 @@ namespace Lab08
             // Odpalamy Forda Fulkersona
             var (x, y) = ASD.Graphs.Flows.FordFulkerson(my_g, s, t);
 
-            return y.OutEdges(s).Sum(edge => edge.Weight);
+            int sum = 0;
+            foreach (var edge in y.OutEdges(s)) sum += edge.Weight;
+
+            return sum;
         }
 
         
@@ -84,7 +88,8 @@ namespace Lab08
             int s = startOfStars + n;
             int t = s + 1;
 
-            int maxWeight = ships.Sum(ship => ship.num_of_crews);
+            int maxWeight = 0;
+            foreach (var ship in ships) maxWeight += ship.num_of_crews;
 
             var my_g = new DiGraph<int>(t + 1);
             
@@ -160,7 +165,10 @@ namespace Lab08
             // Odpalamy Forda Fulkersona
             var (x, y) = ASD.Graphs.Flows.FordFulkerson(my_g, s, t);
 
-            return y.OutEdges(s).Sum(edge => edge.Weight);
+            int sum = 0;
+            foreach (var edge in y.OutEdges(s)) sum += edge.Weight;
+
+            return sum;
         }
     }
 }
