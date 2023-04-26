@@ -82,6 +82,7 @@ public static class Lab10GraphExtender
 
         bool FindMapping(int vh, int[] localMap)
         {
+            int v;
             if (vh == g.VertexCount)
                 return true;
             for (int vg = 0; vg < g.VertexCount; ++vg)
@@ -93,17 +94,13 @@ public static class Lab10GraphExtender
                     continue;
                 }
 
-                bool solutionExists = true;
-                foreach (var edge in h.OutEdges(vh))
-                {
-                    if (edge.To >= vh || (g.HasEdge(localMap[edge.To], vg) && edge.Weight == g.GetEdgeWeight(localMap[edge.To], vg)))
-                        continue;
-                    solutionExists = false;
-                    break;
-                }
-
-                if (!solutionExists) continue;
-                
+                for (v = 0; v < vh; ++v)
+                    if (g.HasEdge(localMap[v], vg) != h.HasEdge(v, vh) || (g.HasEdge(localMap[v], vg) &&
+                                                                           g.GetEdgeWeight(localMap[v], vg) !=
+                                                                           h.GetEdgeWeight(v, vh)))
+                        break;
+                if (v < vh)
+                    continue;
                 used[vg] = true;
                 localMap[vh] = vg;
                 if (FindMapping(vh + 1, localMap)) return true;
@@ -119,40 +116,4 @@ public static class Lab10GraphExtender
         map = null;
         return false;
     }
-
-
-    //public static bool IsomorphismTest(this Graph<int> g, Graph<int> h, out int[] map)
-    //{
-    //    map = null;
-    //    if (g.VertexCount != h.VertexCount)
-    //        return false;
-    //    map = new int[g.VertexCount];
-    //    bool[] used = new bool[g.VertexCount];
-
-    //    bool FindMapping(int vh, int[] localMap)
-    //    {
-    //        int v;
-    //        if (vh == g.VertexCount)
-    //            return true;
-    //        for (int vg = 0; vg < g.VertexCount; ++vg)
-    //            if (!used[vg] && h.OutNeighbors(vh).Count() == g.OutNeighbors(vg).Count())
-    //            {
-    //                for (v = 0; v < vh; ++v)
-    //                    if (g.HasEdge(localMap[v], vg) != h.HasEdge(v, vh) || (g.HasEdge(localMap[v], vg) && g.GetEdgeWeight(localMap[v], vg) != h.GetEdgeWeight(v, vh)))
-    //                        break;
-    //                if (v < vh)
-    //                    continue;
-    //                used[vg] = true;
-    //                localMap[vh] = vg;
-    //                if (FindMapping(vh + 1, localMap)) return true;
-    //                used[vg] = false;
-    //            }
-    //        return false;
-    //    }
-
-    //    if (FindMapping(0, map))
-    //        return true;
-    //    map = null;
-    //    return false;
-    //}
 }
