@@ -27,9 +27,8 @@ namespace Lab10
             {
                 if (v == G.VertexCount - 1) // Wszystkie sa ogarniete
                 {
-                    if (thisAreCorrectFanclubs(G, currentStations, fanclubs))
+                    if (currentCost < foundBestCost && thisAreCorrectStations(G, currentStations, fanclubs))
                     {
-                        // Na pewno currentCost < foundBestCost, bo tu doszlismy 
                         foundBestCost = currentCost;
                         foundBestStations = (bool[])currentStations.Clone();
                     }
@@ -39,18 +38,13 @@ namespace Lab10
                 
                 // Zalozmy, ze do v (razem v) są juz ogarniete
                 int potentialNewCost = currentCost + cost[v + 1];
-                if (potentialNewCost > maxBudget || potentialNewCost >= foundBestCost)
+                if (potentialNewCost <= maxBudget && potentialNewCost < foundBestCost)
                 {
-                    return;
+                    currentStations[v + 1] = true;
+                    FindCost(v + 1, potentialNewCost, currentStations);
+                    currentStations[v + 1] = false;
                 }
-
-                int oldCost = currentCost;
-                currentCost = potentialNewCost;
-                currentStations[v + 1] = true;
-                FindCost(v + 1, currentCost, currentStations);
-                    
-                currentCost = oldCost;
-                currentStations[v + 1] = false;
+                
                 FindCost(v + 1, currentCost, currentStations);
             }
 
@@ -73,7 +67,7 @@ namespace Lab10
             return outStations;
         }
 
-        private static bool thisAreCorrectFanclubs(Graph G, bool[] currentStations, List<int> fanclubs)
+        private static bool thisAreCorrectStations(Graph G, bool[] currentStations, List<int> fanclubs)
         {
             // moj DFS, ktory szuka scierzek
             bool DFSOnlyOneFanclub(int funclub)
