@@ -20,12 +20,13 @@ namespace Lab10
             int foundBestCost = Int32.MaxValue;
             bool[] foundBestStations = new bool[G.VertexCount];
             
-            int currentCost = 0;
             bool[] currentStations = new bool[G.VertexCount];
 
-            void FindCost(int v, int currentCost, bool[] currentStations)
+            void FindCost(int v, int currentCost)
             {
-                if (v == G.VertexCount - 1) // Wszystkie sa ogarniete
+                // Zalozmy, ze do v (bez v) są juz ogarniete
+                
+                if (v == G.VertexCount) // Wszystkie sa ogarniete; v to nie wierzcholek
                 {
                     if (currentCost < foundBestCost && thisAreCorrectStations(G, currentStations, fanclubs))
                     {
@@ -36,19 +37,18 @@ namespace Lab10
                     return;
                 }
                 
-                // Zalozmy, ze do v (razem v) są juz ogarniete
-                int potentialNewCost = currentCost + cost[v + 1];
+                int potentialNewCost = currentCost + cost[v];
                 if (potentialNewCost <= maxBudget && potentialNewCost < foundBestCost)
                 {
-                    currentStations[v + 1] = true;
-                    FindCost(v + 1, potentialNewCost, currentStations);
-                    currentStations[v + 1] = false;
+                    currentStations[v] = true;
+                    FindCost(v + 1, potentialNewCost);
+                    currentStations[v] = false;
                 }
                 
-                FindCost(v + 1, currentCost, currentStations);
+                FindCost(v + 1, currentCost);
             }
 
-            FindCost(-1, currentCost, currentStations);
+            FindCost(0, 0);
 
             if (foundBestCost == Int32.MaxValue)
             {
