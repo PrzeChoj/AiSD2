@@ -75,6 +75,10 @@ namespace Lab10
                 bool[] visited = (bool[])currentStations.Clone(); // Nie mozemy przejsc przez posterunki, wiec to tak jakbysmy juz w nich byli
                 Stack<int> stack = new Stack<int>();
 
+                if (visited[funclub])
+                {
+                    return true; // On jest poza grafem
+                }
                 visited[funclub] = true;
                 stack.Push(funclub);
 
