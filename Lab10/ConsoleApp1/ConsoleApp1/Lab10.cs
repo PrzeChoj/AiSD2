@@ -123,7 +123,105 @@ namespace Lab10
         /// <returns></returns>
         public List<int> FindConnectedSeparatingSet(Graph G, List<int> fanclubs, int[] cost, int maxBudget)
         {
-            return null;
+            int foundBestCost = Int32.MaxValue;
+            bool[] foundBestStations = new bool[G.VertexCount];
+            
+            bool[] currentStations = new bool[G.VertexCount];
+
+            void FindCost(int v, int currentCost)
+            {
+                // Zalozmy, ze do v (bez v) są juz ogarniete
+                
+                if (v == G.VertexCount) // Wszystkie sa ogarniete; v to nie wierzcholek
+                {
+                    if (currentCost < foundBestCost && thisAreCorrectStations(G, currentStations, fanclubs) && thisSIsConnected(G, currentStations))
+                    {
+                        foundBestCost = currentCost;
+                        foundBestStations = (bool[])currentStations.Clone();
+                    }
+
+                    return;
+                }
+                
+                int potentialNewCost = currentCost + cost[v];
+                if (potentialNewCost <= maxBudget && potentialNewCost < foundBestCost)
+                {
+                    currentStations[v] = true;
+                    FindCost(v + 1, potentialNewCost);
+                    currentStations[v] = false;
+                }
+                
+                FindCost(v + 1, currentCost);
+            }
+
+            FindCost(0, 0);
+
+            if (foundBestCost == Int32.MaxValue)
+            {
+                return null;
+            }
+
+            var outStations = new List<int>();
+            for (int i = 0; i < G.VertexCount; i++)
+            {
+                if (foundBestStations[i])
+                {
+                    outStations.Add(i);
+                }
+            }
+            
+            return outStations;
+        }
+
+        private bool thisSIsConnected(Graph G, bool[] stations)
+        {
+            bool[] visited = new bool[G.VertexCount];
+            Stack<int> stack = new Stack<int>();
+
+            int? GetFirstStation(bool[] myStations)
+            {
+                for (int i = 0; i < myStations.Length; i++)
+                {
+                    if(myStations[i])
+                        return i;
+                }
+
+                return null;
+            }
+
+            int? firstStation = GetFirstStation(stations);
+
+            if (firstStation == null)
+                return true;
+
+            visited[(int)firstStation] = true;
+            stack.Push((int)firstStation);
+
+            int v;
+
+            while (stack.Count != 0)
+            {
+                v = stack.Pop();
+                    
+                foreach (int i in G.OutNeighbors(v))
+                {
+                    if (visited[i] || !stations[i]) // Bedziemy chodzi tylko po stacjach
+                        continue;
+                    visited[i] = true;
+                    stack.Push(i);
+                }
+            }
+            
+            // Czy odwiedzilismy wszystkie stacje?
+            for (int i = 0; i < stations.Length; i++)
+            {
+                if(!stations[i])
+                    continue;
+                if (!visited[i])
+                    return false;
+            }
+
+            return true;
         }
     }
 }
