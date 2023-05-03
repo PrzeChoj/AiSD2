@@ -134,7 +134,11 @@ namespace Lab10
                 
                 if (v == G.VertexCount) // Wszystkie sa ogarniete; v to nie wierzcholek
                 {
-                    if (currentCost < foundBestCost && thisAreCorrectStations(G, currentStations, fanclubs) && thisSIsConnected(G, currentStations))
+                    if (currentCost >= foundBestCost)
+                        return;
+
+                    (HashSet<int> stationsInt, int? firstStation) = getStationsHashSet(currentStations);
+                    if (/*fastConnectivityTest(G, stationsInt) && */thisSIsConnected(G, stationsInt, firstStation) && thisAreCorrectStations(G, currentStations, fanclubs))
                     {
                         foundBestCost = currentCost;
                         foundBestStations = (bool[])currentStations.Clone();
@@ -173,55 +177,76 @@ namespace Lab10
             return outStations;
         }
 
-        private bool thisSIsConnected(Graph G, bool[] stations)
+        private (HashSet<int> stationsInt, int? firstStation) getStationsHashSet(bool[] stations)
         {
-            bool[] visited = new bool[G.VertexCount];
-            Stack<int> stack = new Stack<int>();
-
-            int? GetFirstStation(bool[] myStations)
+            int? firstStation = null;
+            HashSet<int> stationsInt = new HashSet<int>();
+            for (int i = stations.Length - 1; i >= 0; i--)
             {
-                for (int i = 0; i < myStations.Length; i++)
+                if (stations[i])
                 {
-                    if(myStations[i])
-                        return i;
+                    stationsInt.Add(i);
+                    firstStation = i;
                 }
-
-                return null;
             }
+            
+            return (stationsInt, firstStation);
+        }
 
-            int? firstStation = GetFirstStation(stations);
-
-            if (firstStation == null)
+        private bool fastConnectivityTest(Graph G, HashSet<int> stationsInt)
+        {
+            if (stationsInt.Count <= 1)
                 return true;
 
+            bool hasNeighbourStation(int myI)
+            {
+                for (int j = 0; j < G.VertexCount; j++)
+                {
+                    if (stationsInt.Contains(j) && G.HasEdge(myI, j))
+                        return true;
+                }
+
+                return false;
+            }
+
+            foreach (int i in stationsInt)
+            {
+                if (!hasNeighbourStation(i))
+                    return false;
+                
+            }
+            return true;
+        }
+
+        private bool thisSIsConnected(Graph G, HashSet<int> stationsInt, int? firstStation)
+        {
+            if (firstStation == null)
+                return true;
+            
+            bool[] visited = new bool[G.VertexCount];
+            Stack<int> stack = new Stack<int>();
+            
             visited[(int)firstStation] = true;
             stack.Push((int)firstStation);
 
+            int numOfVisitedStations = 1;
             int v;
 
             while (stack.Count != 0)
             {
                 v = stack.Pop();
-                    
-                foreach (int i in G.OutNeighbors(v))
+
+                for (int i = 0; i < G.VertexCount; i++)
                 {
-                    if (visited[i] || !stations[i]) // Bedziemy chodzi tylko po stacjach
+                    if(visited[i] || !stationsInt.Contains(i) || !G.HasEdge(v, i))
                         continue;
+                    numOfVisitedStations++;
                     visited[i] = true;
                     stack.Push(i);
                 }
             }
             
-            // Czy odwiedzilismy wszystkie stacje?
-            for (int i = 0; i < stations.Length; i++)
-            {
-                if(!stations[i])
-                    continue;
-                if (!visited[i])
-                    return false;
-            }
-
-            return true;
+            return numOfVisitedStations == stationsInt.Count;
         }
     }
 }
