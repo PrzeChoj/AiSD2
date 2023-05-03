@@ -176,8 +176,9 @@ namespace Lab10
                     FindCost(v + 1, potentialNewCost);
                     currentStations[verticesOrder[v]] = false;
                 }
-                
-                FindCost(v + 1, currentCost); // This has to be checked first. Last Lab test is 10 times faster
+
+                if (v < G.VertexCount / 2 || WithoutVItCanStillBeConnected(G, verticesOrder, currentStations, v)) 
+                    FindCost(v + 1, currentCost); // This has to be checked first. Last Lab test is 10 times faster
             }
 
             FindCost(0, 0);
@@ -197,6 +198,69 @@ namespace Lab10
             }
             
             return outStations;
+        }
+
+        private static bool WithoutVItCanStillBeConnected(Graph G, int[] verticesOrder, bool[] currentStations, int v)
+        {
+            bool[] currentStationsCopy = new bool[currentStations.Length];
+            bool[] placedStations = new bool[currentStations.Length];
+
+            for (int i = 0; i <= v; i++)
+            {
+                if (currentStations[verticesOrder[i]])
+                    placedStations[verticesOrder[i]] = true;
+                currentStationsCopy[verticesOrder[i]] = currentStations[verticesOrder[i]];
+            }
+            for (int i = v + 1; i < G.VertexCount; i++)
+            {
+                currentStationsCopy[verticesOrder[i]] = true;
+            }
+            
+            return ThisSIsConnectedUpToV(G, currentStationsCopy, placedStations);
+        }
+
+        private static bool ThisSIsConnectedUpToV(Graph G, bool[] stations, bool[] placedStations)
+        {
+            int? firstStation = null;
+            int numOfStations = 0;
+
+            for (int i = placedStations.Length - 1; i >= 0; i--)
+            {
+                if (placedStations[i])
+                {
+                    numOfStations++;
+                    firstStation = i;
+                }
+            }
+            
+            if (firstStation == null)
+                return true;
+            
+            bool[] visited = new bool[G.VertexCount];
+            Stack<int> stack = new Stack<int>();
+            
+            visited[(int)firstStation] = true;
+            stack.Push((int)firstStation);
+
+            int numOfVisitedStations = 1;
+            int v;
+
+            while (stack.Count != 0)
+            {
+                v = stack.Pop();
+
+                for (int i = 0; i < G.VertexCount; i++)
+                {
+                    if(!G.HasEdge(v, i) || visited[i] || !stations[i])
+                        continue;
+                    if(placedStations[i])
+                        numOfVisitedStations++;
+                    visited[i] = true;
+                    stack.Push(i);
+                }
+            }
+            
+            return numOfVisitedStations == numOfStations;
         }
 
         private static bool ThisSIsConnected(Graph G, bool[] stations)
