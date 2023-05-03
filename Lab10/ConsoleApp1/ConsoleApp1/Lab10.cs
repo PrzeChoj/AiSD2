@@ -136,12 +136,13 @@ namespace Lab10
                 {
                     if (currentCost >= foundBestCost)
                         return;
-
-                    if (ThisSIsConnected(G, currentStations) && ThisAreCorrectStations(G, currentStations, fanclubs))
-                    {
-                        foundBestCost = currentCost;
-                        foundBestStations = (bool[])currentStations.Clone();
-                    }
+                    if (!ThisSIsConnected(G, currentStations))
+                        return;
+                    if (!ThisAreCorrectStations(G, currentStations, fanclubs))
+                        return;
+                    
+                    foundBestCost = currentCost;
+                    foundBestStations = (bool[])currentStations.Clone();
 
                     return;
                 }
@@ -174,22 +175,6 @@ namespace Lab10
             }
             
             return outStations;
-        }
-
-        private static (HashSet<int> stationsInt, int? firstStation) GetStationsHashSet(bool[] stations)
-        {
-            int? firstStation = null;
-            HashSet<int> stationsInt = new HashSet<int>();
-            for (int i = stations.Length - 1; i >= 0; i--)
-            {
-                if (stations[i])
-                {
-                    stationsInt.Add(i);
-                    firstStation = i;
-                }
-            }
-            
-            return (stationsInt, firstStation);
         }
 
         private static bool ThisSIsConnected(Graph G, bool[] stations)
