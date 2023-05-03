@@ -28,7 +28,7 @@ namespace Lab10
                 
                 if (v == G.VertexCount) // Wszystkie sa ogarniete; v to nie wierzcholek
                 {
-                    if (currentCost < foundBestCost && thisAreCorrectStations(G, currentStations, fanclubs))
+                    if (currentCost < foundBestCost && ThisAreCorrectStations(G, currentStations, fanclubs))
                     {
                         foundBestCost = currentCost;
                         foundBestStations = (bool[])currentStations.Clone();
@@ -67,7 +67,7 @@ namespace Lab10
             return outStations;
         }
 
-        private static bool thisAreCorrectStations(Graph G, bool[] currentStations, List<int> fanclubs)
+        private static bool ThisAreCorrectStations(Graph G, bool[] currentStations, List<int> fanclubs)
         {
             // moj DFS, ktory szuka scierzek
             bool DFSOnlyOneFanclub(int funclub)
@@ -137,8 +137,8 @@ namespace Lab10
                     if (currentCost >= foundBestCost)
                         return;
 
-                    (HashSet<int> stationsInt, int? firstStation) = getStationsHashSet(currentStations);
-                    if (/*fastConnectivityTest(G, stationsInt) && */thisSIsConnected(G, stationsInt, firstStation) && thisAreCorrectStations(G, currentStations, fanclubs))
+                    (HashSet<int> stationsInt, int? firstStation) = GetStationsHashSet(currentStations);
+                    if (/*FastConnectivityTest(G, stationsInt) && */ThisSIsConnected(G, stationsInt, firstStation) && ThisAreCorrectStations(G, currentStations, fanclubs))
                     {
                         foundBestCost = currentCost;
                         foundBestStations = (bool[])currentStations.Clone();
@@ -147,6 +147,8 @@ namespace Lab10
                     return;
                 }
                 
+                FindCost(v + 1, currentCost); // This has to be checked first. Last Lab test is 10 times faster
+                
                 int potentialNewCost = currentCost + cost[v];
                 if (potentialNewCost <= maxBudget && potentialNewCost < foundBestCost)
                 {
@@ -154,8 +156,6 @@ namespace Lab10
                     FindCost(v + 1, potentialNewCost);
                     currentStations[v] = false;
                 }
-                
-                FindCost(v + 1, currentCost);
             }
 
             FindCost(0, 0);
@@ -177,7 +177,7 @@ namespace Lab10
             return outStations;
         }
 
-        private (HashSet<int> stationsInt, int? firstStation) getStationsHashSet(bool[] stations)
+        private static (HashSet<int> stationsInt, int? firstStation) GetStationsHashSet(bool[] stations)
         {
             int? firstStation = null;
             HashSet<int> stationsInt = new HashSet<int>();
@@ -193,16 +193,16 @@ namespace Lab10
             return (stationsInt, firstStation);
         }
 
-        private bool fastConnectivityTest(Graph G, HashSet<int> stationsInt)
+        private static bool FastConnectivityTest(Graph G, HashSet<int> stationsInt)
         {
             if (stationsInt.Count <= 1)
                 return true;
 
-            bool hasNeighbourStation(int myI)
+            bool HasNeighbourStation(int myI)
             {
                 for (int j = 0; j < G.VertexCount; j++)
                 {
-                    if (stationsInt.Contains(j) && G.HasEdge(myI, j))
+                    if (G.HasEdge(myI, j) && stationsInt.Contains(j))
                         return true;
                 }
 
@@ -211,14 +211,14 @@ namespace Lab10
 
             foreach (int i in stationsInt)
             {
-                if (!hasNeighbourStation(i))
+                if (!HasNeighbourStation(i))
                     return false;
                 
             }
             return true;
         }
 
-        private bool thisSIsConnected(Graph G, HashSet<int> stationsInt, int? firstStation)
+        private static bool ThisSIsConnected(Graph G, HashSet<int> stationsInt, int? firstStation)
         {
             if (firstStation == null)
                 return true;
@@ -238,7 +238,7 @@ namespace Lab10
 
                 for (int i = 0; i < G.VertexCount; i++)
                 {
-                    if(visited[i] || !stationsInt.Contains(i) || !G.HasEdge(v, i))
+                    if(!G.HasEdge(v, i) || visited[i] || !stationsInt.Contains(i))
                         continue;
                     numOfVisitedStations++;
                     visited[i] = true;
