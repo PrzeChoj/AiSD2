@@ -123,6 +123,28 @@ namespace Lab10
         /// <returns></returns>
         public List<int> FindConnectedSeparatingSet(Graph G, List<int> fanclubs, int[] cost, int maxBudget)
         {
+            // Heuristic on the order of the vertices
+            // (the fanclubs will be last on the list, therefore will be the first to be checked):
+            int[] verticesOrder = new int[G.VertexCount];
+
+            bool[] fanclubsBoolTable = new bool[G.VertexCount];
+            int myIndex = G.VertexCount - 1;
+            foreach (int fanclub in fanclubs)
+            {
+                fanclubsBoolTable[fanclub] = true;
+                verticesOrder[myIndex] = fanclub;
+                myIndex--;
+            }
+
+            for (int i = 0; i < G.VertexCount; i++)
+            {
+                if (fanclubsBoolTable[i])
+                    continue;
+                verticesOrder[myIndex] = i;
+                myIndex--;
+            }
+
+            // Start of the solution
             int foundBestCost = Int32.MaxValue;
             bool[] foundBestStations = new bool[G.VertexCount];
             
@@ -147,15 +169,15 @@ namespace Lab10
                     return;
                 }
                 
-                FindCost(v + 1, currentCost); // This has to be checked first. Last Lab test is 10 times faster
-                
-                int potentialNewCost = currentCost + cost[v];
+                int potentialNewCost = currentCost + cost[verticesOrder[v]];
                 if (potentialNewCost <= maxBudget && potentialNewCost < foundBestCost)
                 {
-                    currentStations[v] = true;
+                    currentStations[verticesOrder[v]] = true;
                     FindCost(v + 1, potentialNewCost);
-                    currentStations[v] = false;
+                    currentStations[verticesOrder[v]] = false;
                 }
+                
+                FindCost(v + 1, currentCost); // This has to be checked first. Last Lab test is 10 times faster
             }
 
             FindCost(0, 0);
