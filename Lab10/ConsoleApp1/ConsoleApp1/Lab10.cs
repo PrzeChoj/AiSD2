@@ -137,8 +137,7 @@ namespace Lab10
                     if (currentCost >= foundBestCost)
                         return;
 
-                    (HashSet<int> stationsInt, int? firstStation) = GetStationsHashSet(currentStations);
-                    if (/*FastConnectivityTest(G, stationsInt) && */ThisSIsConnected(G, stationsInt, firstStation) && ThisAreCorrectStations(G, currentStations, fanclubs))
+                    if (ThisSIsConnected(G, currentStations) && ThisAreCorrectStations(G, currentStations, fanclubs))
                     {
                         foundBestCost = currentCost;
                         foundBestStations = (bool[])currentStations.Clone();
@@ -193,33 +192,20 @@ namespace Lab10
             return (stationsInt, firstStation);
         }
 
-        private static bool FastConnectivityTest(Graph G, HashSet<int> stationsInt)
+        private static bool ThisSIsConnected(Graph G, bool[] stations)
         {
-            if (stationsInt.Count <= 1)
-                return true;
+            int? firstStation = null;
+            int numOfStations = 0;
 
-            bool HasNeighbourStation(int myI)
+            for (int i = stations.Length - 1; i >= 0; i--)
             {
-                for (int j = 0; j < G.VertexCount; j++)
+                if (stations[i])
                 {
-                    if (G.HasEdge(myI, j) && stationsInt.Contains(j))
-                        return true;
+                    numOfStations++;
+                    firstStation = i;
                 }
-
-                return false;
             }
-
-            foreach (int i in stationsInt)
-            {
-                if (!HasNeighbourStation(i))
-                    return false;
-                
-            }
-            return true;
-        }
-
-        private static bool ThisSIsConnected(Graph G, HashSet<int> stationsInt, int? firstStation)
-        {
+            
             if (firstStation == null)
                 return true;
             
@@ -238,7 +224,7 @@ namespace Lab10
 
                 for (int i = 0; i < G.VertexCount; i++)
                 {
-                    if(!G.HasEdge(v, i) || visited[i] || !stationsInt.Contains(i))
+                    if(!G.HasEdge(v, i) || visited[i] || !stations[i])
                         continue;
                     numOfVisitedStations++;
                     visited[i] = true;
@@ -246,7 +232,7 @@ namespace Lab10
                 }
             }
             
-            return numOfVisitedStations == stationsInt.Count;
+            return numOfVisitedStations == numOfStations;
         }
     }
 }
