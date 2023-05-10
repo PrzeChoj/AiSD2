@@ -124,25 +124,8 @@ namespace Lab10
         public List<int> FindConnectedSeparatingSet(Graph G, List<int> fanclubs, int[] cost, int maxBudget)
         {
             // Heuristic on the order of the vertices
-            // (the fanclubs will be last on the list, therefore will be the first to be checked):
-            int[] verticesOrder = new int[G.VertexCount];
-
-            bool[] fanclubsBoolTable = new bool[G.VertexCount];
-            int myIndex = G.VertexCount - 1;
-            foreach (int fanclub in fanclubs)
-            {
-                fanclubsBoolTable[fanclub] = true;
-                verticesOrder[myIndex] = fanclub;
-                myIndex--;
-            }
-
-            for (int i = 0; i < G.VertexCount; i++)
-            {
-                if (fanclubsBoolTable[i])
-                    continue;
-                verticesOrder[myIndex] = i;
-                myIndex--;
-            }
+            // (doskonale ponumerowanie dla grafow cieciwowych; dla niecieciwowych tez cos wypluje, ale nie doskonale):
+            int[] verticesOrder = MCS(G);
 
             // Start of the solution
             int foundBestCost = Int32.MaxValue;
@@ -304,6 +287,59 @@ namespace Lab10
             }
             
             return numOfVisitedStations == numOfStations;
+        }
+        
+        public static int[] MCS(Graph G)
+        {
+            int n = G.VertexCount;
+            int[] outDecompose = new int[n];
+        
+            outDecompose[0] = 0; // Pierwszy jest jakikolwiek
+            HashSet<int> found = new HashSet<int>(n){0};
+            HashSet<int> notFound = new HashSet<int>(n);
+            for (int i = 1; i < n; i++)
+            {
+                notFound.Add(i);
+            }
+
+            for (int wypelnione = 1; wypelnione < n; wypelnione++) // glowna pentla
+            {
+                // Znajdzmy bestVertex, czyli wierzcholek z najwiekrza liczba sasiadow wsord juz ponumerowanych
+                int bestVertex = -1;
+                int bigestNumberOfNeighbours = -1;
+                int thisNumberOfNeighbours;
+            
+                foreach (int v in notFound)
+                {
+                    thisNumberOfNeighbours = GetNumberOfFoundNeighbours(G, v, found);
+                    if (thisNumberOfNeighbours > bigestNumberOfNeighbours)
+                    {
+                        bestVertex = v;
+                        bigestNumberOfNeighbours = thisNumberOfNeighbours;
+                    }
+                }
+                // bestVertex znaleziony
+
+                outDecompose[wypelnione] = bestVertex;
+                found.Add(bestVertex);
+                notFound.Remove(bestVertex);
+            }
+
+            return outDecompose;
+        }
+        
+        public static int GetNumberOfFoundNeighbours(Graph G, int v, HashSet<int> found)
+        {
+            int numberOfFoundNeighbours = 0;
+            for (int i = 0; i < G.VertexCount; i++)
+            {
+                if (G.HasEdge(v, i) && v != i && found.Contains(i))
+                {
+                    numberOfFoundNeighbours++;
+                }
+            }
+
+            return numberOfFoundNeighbours;
         }
     }
 }
