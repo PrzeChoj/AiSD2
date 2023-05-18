@@ -308,15 +308,26 @@ namespace Lab12
         /// </summary>
         enum EventType
         {
-
+            MetroStart,
+            MetroCrossing,
+            MetroEnd
         }
 
         /// <summary>
         /// Opisuje zdarzenie
         /// </summary>
-        class SweepEvent
+        private class SweepEvent
         {
+            public EventType eventType;
+            public double x;
+            public double y;
 
+            SweepEvent(EventType eventType, double x, double y)
+            {
+                this.eventType = eventType;
+                this.x = x;
+                this.y = y;
+            }
         }
 
         /// <summary>
@@ -336,6 +347,12 @@ namespace Lab12
             /// </returns>
             public int Compare(SweepEvent e1, SweepEvent e2)
             {
+                // Zobacz, ze jest e2 - e1, a nie e1 - e2:
+                if (Math.Abs(e1.x - e2.x) > EPS)
+                    return Math.Sign(e2.x - e1.x);
+                if (Math.Abs(e1.y - e2.y) > EPS)
+                    return Math.Sign(e2.y - e1.y);
+                
                 return 0;
             }
         }
@@ -347,6 +364,8 @@ namespace Lab12
         /// <returns>int - liczba wszystkich stacji przesiadkowych</returns>
         public int Lab12Stage1(((int, int), (int, int))[] lines)
         {
+            // Na poczatek wypelnie 
+            
             return 0;
         }
 
