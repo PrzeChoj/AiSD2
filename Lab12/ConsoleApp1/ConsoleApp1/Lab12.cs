@@ -388,7 +388,6 @@ namespace Lab12
 
             List<((int, int), (int, int))> startedLines = new List<((int, int), (int, int))>();
             
-            // TODO(Czy usuwanie z XStructureStarts przyspieszy dzialanie, czy opozni?)
             int countIntersections = 0;
 
             foreach (int startX in xStructure)
@@ -451,6 +450,27 @@ namespace Lab12
             return (x >= x1 && x <= x2 || x >= x2 && x <= x1) && (y >= y1 && y <= y2 || y >= y2 && y <= y1);
         }
 
+        public class Node
+        {
+            public (double, double) Val;
+            public Node Next;
+
+            public Node((double, double) val, Node nextNode = null)
+            {
+                Val = val;
+                Next = nextNode;
+            }
+        }
+        // Custom comparer for Node based on Val property
+        public class NodeComparer : IComparer<Node>
+        {
+            public int Compare(Node x, Node y)
+            {
+                // Compare the double values of Val
+                return x.Val.Item1.CompareTo(y.Val.Item1);
+            }
+        }
+
         /// <summary>
         /// Etap 2 - znaleźć maksymalną długość nieprzerwanego fragmentu metra między dwoma dowolnymi stacjami
         /// </summary>
@@ -458,7 +478,123 @@ namespace Lab12
         /// <returns>double - maksymalna długość nieprzerwanego fragmentu metra między dwoma dowolnymi stacjami</returns>
         public double Lab12Stage2(((int, int), (int, int))[] lines)
         {
-            return 0.0;
+            // Dodaj wszystkie starty i konce do X struktuty.
+            // Potem zdejmuj z niej.
+                // Jesli to początek, to "zacznij" odcinek i sprawdzaj ze wszystkimi zaczętymi, czy nie ma kolizji.
+                // Jesli to koniec, to "zakoncz" odcinek.
+            
+            // X struktura
+            SortedSet<int> xStructure = new SortedSet<int>();
+            Hashtable xStructureSecond = new Hashtable(); // Dostaje pierwsza wspolrzedna x albo druga wspolrzedna x, zwraca cala linie
+            HashSet<int> xStructureStarts = new HashSet<int>(); // Jak to bedzie wpisane, to znaczy, ze to poczatek
+            Hashtable lastIntersectionHead = new Hashtable(); // Bedzie trzymac liste (Node) wszystkich stacji
+            Hashtable lastIntersectionTail = new Hashtable(); // Bedzie trzymac ostatni node
+            foreach (((int, int), (int, int)) line in lines)
+            {
+                // modifiedLine is line, or flipped line, so that it is left to right
+                ((int, int), (int, int)) modifiedLine = line.Item1.Item1 < line.Item2.Item1 ? line : (line.Item2, line.Item1);
+
+                xStructure.Add(modifiedLine.Item1.Item1);
+                xStructure.Add(modifiedLine.Item2.Item1);
+                
+                xStructureSecond.Add(modifiedLine.Item1.Item1, modifiedLine);
+                xStructureSecond.Add(modifiedLine.Item2.Item1, modifiedLine);
+                
+                xStructureStarts.Add(modifiedLine.Item1.Item1);
+                
+                Node lastNode = new Node(modifiedLine.Item2);
+                lastIntersectionTail.Add(modifiedLine.Item1.Item1, lastNode);
+                lastIntersectionHead.Add(modifiedLine.Item1.Item1, new Node(modifiedLine.Item1, lastNode));
+            }
+            
+            List<((int, int), (int, int))> startedLines = new List<((int, int), (int, int))>();
+            
+            foreach (int startX in xStructure)
+            {
+                var lineProcessed = (((int, int), (int, int)))xStructureSecond[startX];
+                if (!xStructureStarts.Contains(startX))
+                {
+                    startedLines.Remove(lineProcessed);
+                    continue;
+                }
+
+                foreach (((int, int), (int, int)) startedLine in startedLines)
+                {
+                    if (!DoLinesCross(lineProcessed, startedLine))
+                    {
+                        continue;
+                    }
+                    
+                    (double, double) intersectionStation = CalculateIntersectionPoint(lineProcessed, startedLine);
+                    ((Node)lastIntersectionTail[lineProcessed.Item1.Item1]).Next = new Node(intersectionStation);
+                    lastIntersectionTail[lineProcessed.Item1.Item1] = ((Node)lastIntersectionTail[lineProcessed.Item1.Item1]).Next;
+                    ((Node)lastIntersectionTail[startedLine.Item1.Item1]).Next = new Node(intersectionStation);
+                    lastIntersectionTail[startedLine.Item1.Item1] = ((Node)lastIntersectionTail[startedLine.Item1.Item1]).Next;
+                }
+                
+                startedLines.Add(lineProcessed);
+            }
+
+            double longestRide = 0;
+            foreach (int startX in xStructureStarts)
+            {
+                Node node = (Node)lastIntersectionHead[startX];
+                
+                // Posortuj node po pierwszej wspolrzednej
+                SortedSet<Node> sortedNodeSet = new SortedSet<Node>(new NodeComparer());
+
+                while (node != null)
+                {
+                    sortedNodeSet.Add(node);
+                    node = node.Next;
+                }
+
+                Node lastNode = null;
+                foreach (Node node1 in sortedNodeSet)
+                {
+                    if (lastNode != null)
+                    {
+                        double dist = CalculateEuclideanDistant(lastNode, node1);
+                        if (dist > longestRide)
+                            longestRide = dist;
+                    }
+
+                    lastNode = node1;
+                }
+            }
+
+            return longestRide;
+        }
+
+        public static (double, double) CalculateIntersectionPoint(((int, int), (int, int)) line1, ((int, int), (int, int)) line2)
+        {
+            // Extract the coordinates of the lines
+            int x1 = line1.Item1.Item1;
+            int y1 = line1.Item1.Item2;
+            int x2 = line1.Item2.Item1;
+            int y2 = line1.Item2.Item2;
+
+            int x3 = line2.Item1.Item1;
+            int y3 = line2.Item1.Item2;
+            int x4 = line2.Item2.Item1;
+            int y4 = line2.Item2.Item2;
+
+            // Calculate the slopes of the lines
+            double slope1 = (double)(y2 - y1) / (x2 - x1);
+            double slope2 = (double)(y4 - y3) / (x4 - x3);
+
+            // Lines are not parallel, because wy checked it with DoLinesCross().
+
+            // Calculate the intersection point
+            double intersectionX = (slope1 * x1 - slope2 * x3 + y3 - y1) / (slope1 - slope2);
+            double intersectionY = slope1 * (intersectionX - x1) + y1;
+
+            return (intersectionX, intersectionY);
+        }
+
+        public static double CalculateEuclideanDistant(Node n1, Node n2)
+        {
+            return Math.Sqrt((n1.Val.Item1 - n2.Val.Item1) * (n1.Val.Item1 - n2.Val.Item1) + (n1.Val.Item2 - n2.Val.Item2) * (n1.Val.Item2 - n2.Val.Item2));
         }
     }
 }
