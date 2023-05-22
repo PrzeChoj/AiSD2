@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -364,9 +365,90 @@ namespace Lab12
         /// <returns>int - liczba wszystkich stacji przesiadkowych</returns>
         public int Lab12Stage1(((int, int), (int, int))[] lines)
         {
-            // Na poczatek wypelnie 
+            // Dodaj wszystkie starty i konce do X struktuty.
+            // Potem zdejmuj z niej.
+                // Jesli to początek, to "zacznij" odcinek i sprawdzaj ze wszystkimi zaczętymi, czy nie ma kolizji.
+                // Jesli to koniec, to "zakoncz" odcinek.
             
-            return 0;
+            // X struktura
+            SortedSet<int> xStructure = new SortedSet<int>();
+            Hashtable xStructureSecond = new Hashtable(); // Dostaje pierwsza wspolrzedna x albo druga wspolrzedna x, zwraca cala linie
+            HashSet<int> xStructureStarts = new HashSet<int>(); // Jak to bedzie wpisane, to znaczy, ze to poczatek
+            foreach (((int, int), (int, int)) line in lines)
+            {
+                // modifiedLine is line, or flipped line, so that it is left to right
+                ((int, int), (int, int)) modifiedLine = line.Item1.Item1 < line.Item2.Item1 ? line : (line.Item2, line.Item1);
+
+                xStructure.Add(modifiedLine.Item1.Item1);
+                xStructure.Add(modifiedLine.Item2.Item1);
+                xStructureSecond.Add(modifiedLine.Item1.Item1, modifiedLine);
+                xStructureSecond.Add(modifiedLine.Item2.Item1, modifiedLine);
+                xStructureStarts.Add(modifiedLine.Item1.Item1);
+            }
+
+            List<((int, int), (int, int))> startedLines = new List<((int, int), (int, int))>();
+            
+            // TODO(Czy usuwanie z XStructureStarts przyspieszy dzialanie, czy opozni?)
+            int countIntersections = 0;
+
+            foreach (int startX in xStructure)
+            {
+                var lineProcessed = (((int, int), (int, int)))xStructureSecond[startX];
+                if (!xStructureStarts.Contains(startX))
+                {
+                    startedLines.Remove(lineProcessed);
+                    continue;
+                }
+
+                foreach (((int, int), (int, int)) startedLine in startedLines)
+                {
+                    if (DoLinesCross(lineProcessed, startedLine))
+                        countIntersections += 1;
+                }
+                
+                startedLines.Add(lineProcessed);
+            }
+
+            return countIntersections;
+        }
+
+        private static bool DoLinesCross(((int, int), (int, int)) line1, ((int, int), (int, int)) line2)
+        {
+            // Extract the coordinates of the lines
+            int x1 = line1.Item1.Item1;
+            int y1 = line1.Item1.Item2;
+            int x2 = line1.Item2.Item1;
+            int y2 = line1.Item2.Item2;
+
+            int x3 = line2.Item1.Item1;
+            int y3 = line2.Item1.Item2;
+            int x4 = line2.Item2.Item1;
+            int y4 = line2.Item2.Item2;
+
+            // Calculate the slopes of the lines
+            double slope1 = (double)(y2 - y1) / (x2 - x1);
+            double slope2 = (double)(y4 - y3) / (x4 - x3);
+
+            // Check if the lines are parallel
+            if (Math.Abs(slope1 - slope2) < double.Epsilon)
+                return false;
+
+            // Calculate the intersection point
+            double intersectionX = (slope1 * x1 - slope2 * x3 + y3 - y1) / (slope1 - slope2);
+            double intersectionY = slope1 * (intersectionX - x1) + y1;
+
+            // Check if the intersection point is within the line segments
+            bool isWithinLine1 = IsPointWithinLineSegment(x1, y1, x2, y2, intersectionX, intersectionY);
+            bool isWithinLine2 = IsPointWithinLineSegment(x3, y3, x4, y4, intersectionX, intersectionY);
+
+            // Return true if the intersection point is within both line segments
+            return isWithinLine1 && isWithinLine2;
+        }
+
+        private static bool IsPointWithinLineSegment(int x1, int y1, int x2, int y2, double x, double y)
+        {
+            // Check if the point is within the line segment defined by (x1, y1) and (x2, y2)
+            return (x >= x1 && x <= x2 || x >= x2 && x <= x1) && (y >= y1 && y <= y2 || y >= y2 && y <= y1);
         }
 
         /// <summary>
