@@ -70,7 +70,41 @@ namespace Lab14
         /// <returns>(int[], int) najdłuższy podciąg bez powtarzających się znaków i jego długość
         public (int[], int) Lab14Stage2(int[] numbers)
         {
-            return (new int[0], 0);
+            Dictionary<int, int> lastIndexMap = new Dictionary<int, int>();
+            int maxLength = 0;
+            int maxLengthIndex = 0;
+            int currentLength = 0;
+            int currentStartIndex = 0;
+
+            for (int i = 0; i < numbers.Length; i++)
+            {
+                if (lastIndexMap.ContainsKey(numbers[i]))
+                {
+                    int lastIndex = lastIndexMap[numbers[i]];
+                    if (lastIndex >= currentStartIndex)
+                    {
+                        currentStartIndex = lastIndex + 1;
+                        currentLength = i - currentStartIndex;
+                    }
+                }
+
+                lastIndexMap[numbers[i]] = i;
+                currentLength++;
+
+                if (currentLength > maxLength)
+                {
+                    maxLength = currentLength;
+                    maxLengthIndex = currentStartIndex;
+                }
+            }
+
+            int[] longestSubsequence = new int[maxLength];
+            for (int i = maxLengthIndex; i < maxLengthIndex + maxLength; i++)
+            {
+                longestSubsequence[i - maxLengthIndex] = numbers[i];
+            }
+
+            return (longestSubsequence, maxLength);
         }
     }
 }
