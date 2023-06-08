@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Schema;
 
 namespace Lab15
 {
@@ -22,8 +21,8 @@ namespace Lab15
             public readonly int Rightmost;
             public int Opened;
             public int Closed;
-            public Node? LeftChild;
-            public Node? RightChild;
+            public Node LeftChild;
+            public Node RightChild;
 
             public Node(int leftmost, int rightmost)
             {
@@ -36,7 +35,7 @@ namespace Lab15
             }
         }
 
-        private Node? _root;
+        private Node _root;
         private readonly Hashtable _tickets = new Hashtable(); // For a tuple, return an int of how many there is of such a tickets
         
         /// <summary>
@@ -49,8 +48,8 @@ namespace Lab15
         /// </remarks>
         public void Initialize(int N)
         {
-            int newN = (int)Math.Pow(2, Math.Ceiling(Math.Log2(N)));
-            int height = (int)Math.Log2(newN);
+            int newN = (int)Math.Pow(2, Math.Ceiling(Math.Log(N, 2)));
+            int height = (int)Math.Log(newN, 2);
 
             _root = new Node(0,  newN- 1);
             MakeChildren(_root, height);
@@ -134,7 +133,7 @@ namespace Lab15
                 throw new Exception("Tree was not initiated!");
             if (_tickets[(start, end)] == null)
                 throw new Exception("There was no such a ticket!");
-            int oldTicketNumber = (int)_tickets[(start, end)]!;
+            int oldTicketNumber = (int)_tickets[(start, end)];
             if (oldTicketNumber == 1)
                 _tickets.Remove((start, end));
             else
