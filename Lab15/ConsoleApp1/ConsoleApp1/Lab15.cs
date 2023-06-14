@@ -47,7 +47,7 @@ namespace Lab15
                 RightChild = null;
 
                 MyMax = -1;
-                TicketsFromStation = Leftmost == Rightmost ? new SortedDictionary<int, int>(new TicketsComparer()) : null;
+                TicketsFromStation = null;
             }
         }
 
@@ -146,6 +146,9 @@ namespace Lab15
                 if (node.MyMax < end) // -1 < end zawsze
                     node.MyMax = end;
             }
+
+            if (node.TicketsFromStation == null)
+                node.TicketsFromStation = new SortedDictionary<int, int>();
 
             if (node.TicketsFromStation.ContainsKey(end))
                 node.TicketsFromStation[end] += 1;
