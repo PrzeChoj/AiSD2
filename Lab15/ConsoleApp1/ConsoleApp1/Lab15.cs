@@ -15,6 +15,16 @@ namespace Lab15
     /// </remarks>
     public class ReservationManager : MarshalByRefObject
     {
+        private class TicketsComparer : IComparer<int>
+        {
+            public int Compare(int e1, int e2)
+            {
+                if (e1 < e2) return 1;
+                if (e1 == e2) return 0;
+                return -1;
+            }
+        }
+        
         private class Node
         {
             public readonly int Leftmost;
@@ -24,6 +34,9 @@ namespace Lab15
             public Node LeftChild;
             public Node RightChild;
 
+            public int MyMax;
+            public SortedDictionary<int, int> TicketsFromStation;
+
             public Node(int leftmost, int rightmost)
             {
                 Leftmost = leftmost;
@@ -32,6 +45,9 @@ namespace Lab15
                 Closed = 0;
                 LeftChild = null;
                 RightChild = null;
+
+                MyMax = -1;
+                TicketsFromStation = Leftmost == Rightmost ? new SortedDictionary<int, int>(new TicketsComparer()) : null;
             }
         }
 
@@ -92,6 +108,7 @@ namespace Lab15
 
             AddStart(_root, start);
             AddEnd(_root, end);
+            AddMax(_root, start, end);
         }
 
         private static void AddStart(Node node, int start)
@@ -118,6 +135,24 @@ namespace Lab15
             }
         }
 
+        private static void AddMax(Node node, int start, int end)
+        {
+            if (node.MyMax < end) // -1 < end zawsze
+                node.MyMax = end;
+            
+            while (node.Leftmost != node.Rightmost)
+            {
+                node = node.RightChild.Leftmost > start ? node.LeftChild : node.RightChild;
+                if (node.MyMax < end) // -1 < end zawsze
+                    node.MyMax = end;
+            }
+
+            if (node.TicketsFromStation.ContainsKey(end))
+                node.TicketsFromStation[end] += 1;
+            else
+                node.TicketsFromStation.Add(end, 1);
+        }
+
         /// <summary>
         /// Usuwa rezerwację pomiędzy zadanymi stacjami.
         /// </summary>
@@ -141,6 +176,7 @@ namespace Lab15
 
             RemoveStart(_root, start);
             RemoveEnd(_root, end);
+            RemoveMax(_root, start, end);
         }
         
         private static void RemoveStart(Node node, int start)
@@ -164,6 +200,26 @@ namespace Lab15
 
                 node = end <= node.LeftChild.Rightmost ? node.LeftChild : node.RightChild;
                 node.Closed -= 1;
+            }
+        }
+        
+        private static void RemoveMax(Node node, int start, int end)
+        {
+            if (node.Leftmost != node.Rightmost)
+            {
+                RemoveMax(node.RightChild.Leftmost > start ? node.LeftChild : node.RightChild, start, end);
+
+                node.MyMax = Math.Max(node.RightChild.MyMax, node.LeftChild.MyMax);
+            }
+            else
+            {
+                if (node.TicketsFromStation[end] == 1)
+                {
+                    node.TicketsFromStation.Remove(end);
+                    node.MyMax = node.TicketsFromStation.Count == 0 ? -1 : node.TicketsFromStation.Keys.Max(); // TODO(Czy to nie jest zbyt wolne?)
+                }
+                else
+                    node.TicketsFromStation[end] -= 1;
             }
         }
 
@@ -219,8 +275,19 @@ namespace Lab15
         /// <returns></returns>
         public (int s, int e) FirstOverlappingReservation(int station)
         {
-            return (-1, -1);
+            Node node = _root;
+            
+            if (node.MyMax <= station)
+                return (-1, -1);
+
+            while (node.Leftmost != node.Rightmost)
+            {
+                node = node.LeftChild.MyMax > station ? node.LeftChild : node.RightChild;
+                if (station < node.Leftmost)
+                    return (-1, -1);
+            }
+            
+            return (node.Leftmost, node.MyMax);
         }
     }
-
 }
